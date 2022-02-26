@@ -1,4 +1,4 @@
-use crate::{Result, CHAIN_DATA_PATH};
+use crate::Result;
 use bech32::Variant;
 use prost_wkt_types::MessageSerde;
 use serde::{de::DeserializeOwned, Serialize};
@@ -82,15 +82,15 @@ where
     Ok(serde_yaml::to_writer(writer, &value)?)
 }
 
-pub fn update_chain(chain_name: &str, path: &str, value: Value) -> Result<()> {
-    let mut chains: Value = crate::utils::read_data_from_yaml(CHAIN_DATA_PATH)?;
+pub fn update_chain(chain_name: &str, path: &str, value: Value, file_path: &str) -> Result<()> {
+    let mut chains: Value = crate::utils::read_data_from_yaml(file_path)?;
 
     chains
         .pointer_mut(&format!("/{chain_name}{path}"))
         .map(|v| *v = value)
         .expect("error");
 
-    write_data_as_yaml(CHAIN_DATA_PATH, chains)?;
+    write_data_as_yaml(file_path, chains)?;
 
     Ok(())
 }
