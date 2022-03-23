@@ -56,7 +56,8 @@ pub async fn get_endpoints<'a>(
     let data = client
         .query_with_vars::<ZoneNodes, Vars>(query, vars)
         .await
-        .expect("parse error");
+        .expect("parse error")
+        .expect("none error");
 
     Ok(futures::stream::iter(data.zone_nodes)
         .then(|mut grpc| async {

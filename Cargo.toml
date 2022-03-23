@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = "1.0.55"
+anyhow = "1.0.56"
 base64 = "0.13.0"
 bech32 = "0.8.1"
 bip32 = { version = "0.3.0", features = ["secp256k1", "bip39"] }
@@ -14,7 +14,7 @@ chrono = "0.4.19"
 cosmos-sdk-proto = { git = "https://github.com/rnbguy/cosmos-rust" }
 der-parser = "7.0.0"
 futures = "0.3.21"
-gql_client = "1.0.2"
+gql_client = "1.0.4"
 keyring = "1.1.2"
 lazy_static = "1.4.0"
 ledger-apdu = "0.8.0"
@@ -31,6 +31,6 @@ tendermint = "0.23.5"
 tendermint-rpc = { version = "0.23.5", features = ["http-client"] }
 thiserror = "1.0.30"
 tokio = { version = "1.17.0", features = ["rt-multi-thread"] }
-tracing = "0.1.31"
+tracing = "0.1.32"
 ureq = { version = "2.4.0", features = ["json"] }
 url = "2.2.2"
