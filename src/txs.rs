@@ -297,6 +297,45 @@ pub async fn generate_unsigned_transaction(
     Ok((account_number, create_transaction(tx_body, auth_info)))
 }
 
+pub async fn generate_unsigned_transaction_with_ledger(
+    any_msgs: &[Any],
+    address: &str,
+    fee: (&u64, &str),
+    grpc_endpoint: &str,
+    fee_granter: &str,
+    mode: SignMode,
+    hrp: &str,
+    derivation_path: &DerivationPath,
+) -> Result<(u64, Tx)> {
+    let (fee_amount, fee_denom) = fee;
+    let tx_body = TxBody {
+        messages: any_msgs.to_vec(),
+        memo: "".into(),
+        ..Default::default()
+    };
+
+    let (account_number, sequence, _) =
+        get_account_number_and_sequence(grpc_endpoint, address).await?;
+
+    let public_key = PubKey {
+        key: crate::ledger::get_pub_key(hrp, derivation_path, false)
+            .await?
+            .0,
+    };
+
+    let auth_info = generate_auth_info(
+        public_key,
+        sequence,
+        400_000,
+        fee_amount,
+        fee_denom,
+        fee_granter,
+        mode,
+    )?;
+
+    Ok((account_number, create_transaction(tx_body, auth_info)))
+}
+
 pub async fn generate_unsigned_transaction_without_pubkey(
     any_msgs: &[Any],
     address: &str,
