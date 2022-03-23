@@ -36,7 +36,11 @@ pub fn process_version(bytes: &[u8]) -> (u8, u16, u16, u16, u16) {
     )
 }
 
-pub fn apdu_ins_get_addr_secp256k1(hrp: &str, derivation_path: &DerivationPath) -> APDUCommand {
+pub fn apdu_ins_get_addr_secp256k1(
+    hrp: &str,
+    derivation_path: &DerivationPath,
+    show_address: bool,
+) -> APDUCommand {
     let mut bytes = vec![];
 
     let hrp_bytes = hrp.as_bytes().to_vec();
@@ -51,7 +55,7 @@ pub fn apdu_ins_get_addr_secp256k1(hrp: &str, derivation_path: &DerivationPath) 
     APDUCommand {
         cla: 0x55,
         ins: 0x04,
-        p1: 0x01,
+        p1: if show_address { 0x01 } else { 0x00 },
         p2: 0x00,
         data: bytes,
     }
@@ -124,10 +128,14 @@ pub async fn get_version() -> Result<(u8, u16, u16, u16, u16)> {
     Ok(resp?)
 }
 
-pub async fn get_pub_key(hrp: &str, derivation_path: &DerivationPath) -> Result<(Vec<u8>, String)> {
+pub async fn get_pub_key(
+    hrp: &str,
+    derivation_path: &DerivationPath,
+    show_address: bool,
+) -> Result<(Vec<u8>, String)> {
     let hid = TransportNativeHID::new()?;
     let transport = APDUTransport::new(hid);
-    let command = apdu_ins_get_addr_secp256k1(hrp, derivation_path);
+    let command = apdu_ins_get_addr_secp256k1(hrp, derivation_path, show_address);
 
     let resp = transport.exchange(&command).await?;
     println!("{:?}", resp);
