@@ -38,9 +38,9 @@ pub struct Endpoint {
 }
 
 pub async fn get_endpoints<'a>(
-    graphql_endpoint: &str,
     chain_id: &'a str,
     bech32_prefix: &'a str,
+    graphql_endpoint: &str,
 ) -> Result<BoxStream<'a, Endpoint>> {
     let query = r#"
         query UserByIdQuery($id: String!) {
