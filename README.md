@@ -39,3 +39,35 @@ rover add-account Ledger my_account
 rover tx sentinelhub-2 [grantee_address] restake my_account
 rover tx cosmoshub-4 [grantee_address] vote my_account 1:Yes 2:Abstain 3:No
 ```
+
+## Features
+
+- [x] Wallet support
+  - [x] OS Keystore via [keyring](https://lib.rs/crates/keyring)
+  - [x] Memory backend
+  - [x] Ledger via [ledger-transport](https://lib.rs/crates/ledger-transport)
+- [x] All types of endpoint support
+  - [x] RPC
+  - [x] GRPC
+  - [x] REST
+- [x] Gas simulation
+- [x] List public endpoints
+- [x] Pull chain info from online resources
+  - [x] PingPub
+  - [x] Cosmos directory (`cosmos/chain-registry` clone)
+  - [x] Emeris (closed)
+- [x] CLI
+  - [ ] Transaction
+    - [x] Send
+    - [x] Vote
+    - [x] Delegate
+    - [x] Redelegate
+    - [x] Auto-restake
+    - [x] Grant
+    - [x] IBC transfer
+    - [x] Support Authz exec
+    - [ ] ??
+  - [ ] Query
+    - [ ] ??
+- [ ] TUI
+  - [ ] ??
