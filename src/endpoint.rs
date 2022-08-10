@@ -3,7 +3,7 @@ use crate::{
     Result,
 };
 
-use futures::{stream::BoxStream, StreamExt};
+use futures::future::join_all;
 use serde::{de::Error, Deserialize, Deserializer, Serialize};
 
 use url::Url;
@@ -23,6 +23,7 @@ where
 
 #[derive(Debug, Deserialize)]
 pub struct RpcAddress {
+    pub zone: String,
     #[serde(deserialize_with = "str_to_url")]
     pub rpc_addr: Url,
 }
@@ -32,20 +33,14 @@ pub struct Vars {
     id: String,
 }
 
-pub struct Endpoint {
-    pub rpc: String,
-    pub grpc: String,
-}
-
-pub async fn get_endpoints<'a>(
+pub async fn get_rpc_endpoints<'a>(
     chain_id: &'a str,
-    bech32_prefix: &'a str,
     graphql_endpoint: &str,
-) -> Result<BoxStream<'a, Endpoint>> {
+) -> Result<Vec<(u64, String)>> {
     let query = r#"
-        query UserByIdQuery($id: String!) {
+        query Query($id: String!) {
             zone_nodes(where: {zone: {_eq: $id}, is_alive: {_eq: true}}, order_by: {last_checked_at: desc})
-            {rpc_addr}
+            {zone rpc_addr}
         }
    "#;
 
@@ -59,31 +54,55 @@ pub async fn get_endpoints<'a>(
         .expect("parse error")
         .expect("none error");
 
-    Ok(futures::stream::iter(data.zone_nodes)
-        .then(|mut grpc| async {
-            let rpc = grpc.rpc_addr.clone();
-            grpc.rpc_addr.set_port(Some(9090)).expect("error");
-            grpc.rpc_addr.set_scheme("http").expect("error");
-            let grpc = grpc.rpc_addr;
-            tokio::time::timeout(
-                std::time::Duration::from_secs(2),
-                validate_grpc(grpc.as_str(), bech32_prefix),
-            )
-            .await??;
-            tokio::time::timeout(
-                std::time::Duration::from_secs(2),
-                validate_rpc(rpc.as_str()),
-            )
-            .await??;
-            Result::Ok(Endpoint {
-                rpc: rpc.to_string().strip_suffix('/').expect("error").to_owned(),
-                grpc: grpc
-                    .to_string()
-                    .strip_suffix('/')
-                    .expect("error")
-                    .to_owned(),
-            })
-        })
-        .filter_map(|x| async { x.ok() })
-        .boxed())
+    let mut list = join_all(data.zone_nodes.into_iter().map(|rpc_struct| async {
+        let rpc = rpc_struct.rpc_addr;
+        let height = tokio::time::timeout(
+            std::time::Duration::from_secs(2),
+            validate_rpc(rpc.as_str(), chain_id),
+        )
+        .await??;
+        Result::Ok((height, rpc.to_string().trim_end_matches('/').into()))
+    }))
+    .await
+    .into_iter()
+    .flatten()
+    .collect::<Vec<_>>();
+
+    list.sort_unstable_by(|a, b| b.cmp(a));
+
+    Ok(list)
+}
+
+pub async fn get_zone_ids<'a>(graphql_endpoint: &str) -> Result<Vec<String>> {
+    let query = r#"
+        query Query {
+            zone_nodes(where: {is_alive: {_eq: true}}, order_by: {zone: asc}, distinct_on: zone)
+            {zone rpc_addr}
+        }
+   "#;
+
+    let client = gql_client::Client::new(graphql_endpoint);
+    let data = client
+        .query::<ZoneNodes>(query)
+        .await
+        .expect("parse error")
+        .expect("none error");
+
+    Ok(data.zone_nodes.into_iter().map(|x| x.zone).collect())
+}
+
+pub async fn transform_to_grpc_endpoint(rpc_addr: &str) -> Result<String> {
+    let mut grpc_addr = Url::try_from(rpc_addr)?;
+    grpc_addr.set_port(Some(9090)).expect("error");
+    grpc_addr.set_scheme("http").expect("error");
+    tokio::time::timeout(
+        std::time::Duration::from_secs(2),
+        validate_grpc(grpc_addr.as_str()),
+    )
+    .await??;
+    Ok(grpc_addr
+        .to_string()
+        .trim_end_matches('/')
+        .trim_start_matches("http://")
+        .into())
 }

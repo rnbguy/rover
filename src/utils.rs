@@ -1,6 +1,6 @@
 use crate::Result;
 use bech32::Variant;
-use prost_wkt_types::MessageSerde;
+use cosmos_sdk_proto::prost_wkt_types::MessageSerde;
 use serde::{de::DeserializeOwned, Serialize};
 use serde_json::Value;
 
@@ -51,7 +51,7 @@ pub fn bech32(address: &str, prefix: &str) -> Result<String> {
     Ok(bech32::encode(prefix, bytes, Variant::Bech32)?)
 }
 
-pub fn parse_dec_amount(st: &str, precision: usize) -> Result<u64> {
+pub fn parse_dec_amount(st: &str, precision: usize) -> Result<u128> {
     Ok(st
         .chars()
         .rev()

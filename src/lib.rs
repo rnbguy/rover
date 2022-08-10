@@ -1,9 +1,11 @@
 // https://iancoleman.io/bip39
 
+pub mod account;
 pub mod broadcast;
+pub mod chain;
+pub mod cli;
 pub mod data;
 pub mod endpoint;
-pub mod error;
 pub mod keys;
 pub mod ledger;
 pub mod msg;

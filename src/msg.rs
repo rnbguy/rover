@@ -4,23 +4,19 @@ use cosmos_sdk_proto::cosmos::base::v1beta1::Coin;
 
 use cosmos_sdk_proto::cosmos::distribution::v1beta1::{
     MsgWithdrawDelegatorReward, QueryDelegationTotalRewardsRequest,
+    QueryDelegationTotalRewardsResponse,
 };
 use cosmos_sdk_proto::cosmos::feegrant::v1beta1::{BasicAllowance, MsgGrantAllowance};
 
 use cosmos_sdk_proto::cosmos::gov::v1beta1::MsgVote;
 use cosmos_sdk_proto::cosmos::staking::v1beta1::MsgDelegate;
 
-use prost_wkt_types::{Any, MessageSerde};
+use cosmos_sdk_proto::prost_wkt_types::{Any, MessageSerde};
 
+use crate::query::perform_rpc_query;
 use crate::Result;
 
-use cosmos_sdk_proto::cosmos::distribution::v1beta1::query_client::QueryClient as DistributionClient;
-
-pub fn generate_authz_msgs(
-    granter: &str,
-    grantee: &str,
-    msg_types: &[&str],
-) -> Result<Vec<MsgGrant>> {
+fn generate_authz_msgs(granter: &str, grantee: &str, msg_types: &[&str]) -> Result<Vec<MsgGrant>> {
     msg_types
         .iter()
         .map(|msg_type| {
@@ -41,7 +37,7 @@ pub fn generate_authz_msgs(
 pub fn local_token_transfer(
     granter: &str,
     grantee: &str,
-    amount: u64,
+    amount: u128,
     denom: &str,
 ) -> Result<MsgSend> {
     Ok(MsgSend {
@@ -78,14 +74,13 @@ pub fn generate_grant_exec(grantee: &str, granted_msgs: &[Any]) -> Result<MsgExe
 
 pub async fn claim_all_reward(
     address: &str,
-    grpc_endpoint: &str,
+    rpc_endpoint: &str,
 ) -> Result<Vec<MsgWithdrawDelegatorReward>> {
     let query = QueryDelegationTotalRewardsRequest {
         delegator_address: address.into(),
     };
 
-    let mut client = DistributionClient::connect(grpc_endpoint.to_owned()).await?;
-    let resp = client.delegation_total_rewards(query).await?.into_inner();
+    let resp: QueryDelegationTotalRewardsResponse = perform_rpc_query(rpc_endpoint, query).await?;
 
     Ok(resp
         .rewards
@@ -112,7 +107,7 @@ pub fn generate_usual_auth(granter: &str, grantee: &str) -> Result<Vec<MsgGrant>
     )
 }
 
-pub fn delegate_to(amount: u64, denom: &str, validator: &str, delegator: &str) -> MsgDelegate {
+pub fn delegate_to(amount: u128, denom: &str, validator: &str, delegator: &str) -> MsgDelegate {
     MsgDelegate {
         delegator_address: delegator.into(),
         validator_address: validator.into(),

@@ -19,8 +19,6 @@ pub struct Chain {
     pub rest_endpoints: Vec<String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub rpc_endpoints: Vec<String>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub grpc_endpoints: Vec<String>,
 
     pub broadcast: Broadcast,
 }
@@ -28,6 +26,5 @@ pub struct Chain {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Broadcast {
     Rpc,
-    Grpc,
     Rest,
 }

@@ -1,14 +1,10 @@
 use bip32::DerivationPath;
 
-use ledger_transport::APDUTransport;
+use ledger_transport_hid::{hidapi, TransportNativeHID};
 
-use ledger::TransportNativeHID;
-
-use ledger_apdu::{map_apdu_error_description, APDUAnswer, APDUCommand};
+use ledger_transport::{APDUCommand, APDUErrorCode};
 
 use serde_json::Value;
-
-use crate::error::Error;
 
 use crate::Result;
 
@@ -16,7 +12,7 @@ use crate::Result;
 // https://github.com/cosmos/ledger-cosmos/blob/main/docs/APDUSPEC.md
 // https://github.com/cosmos/ledger-cosmos/blob/main/docs/TXSPEC.md
 
-pub fn apdu_get_version() -> APDUCommand {
+pub fn apdu_get_version() -> APDUCommand<Vec<u8>> {
     APDUCommand {
         cla: 0x55,
         ins: 0x00,
@@ -40,7 +36,7 @@ pub fn apdu_ins_get_addr_secp256k1(
     hrp: &str,
     derivation_path: &DerivationPath,
     show_address: bool,
-) -> APDUCommand {
+) -> APDUCommand<Vec<u8>> {
     let mut bytes = vec![];
 
     let hrp_bytes = hrp.as_bytes().to_vec();
@@ -68,7 +64,10 @@ pub fn process_pub_key(bytes: &[u8]) -> (Vec<u8>, String) {
     )
 }
 
-pub fn apdu_sign_secp256k1(payload: Value, derivation_path: &DerivationPath) -> Vec<APDUCommand> {
+pub fn apdu_sign_secp256k1(
+    payload: Value,
+    derivation_path: &DerivationPath,
+) -> Vec<APDUCommand<Vec<u8>>> {
     let mut commands = vec![];
 
     let mut bytes = vec![];
@@ -86,8 +85,6 @@ pub fn apdu_sign_secp256k1(payload: Value, derivation_path: &DerivationPath) -> 
     });
 
     let payload_str = serde_json::to_string(&payload).unwrap();
-
-    println!("{}", payload_str);
 
     let payload = payload_str.into_bytes();
     let chunks = payload.as_slice().chunks(64);
@@ -109,23 +106,18 @@ pub fn apdu_sign_secp256k1(payload: Value, derivation_path: &DerivationPath) -> 
 }
 
 pub async fn get_version() -> Result<(u8, u16, u16, u16, u16)> {
-    let hid = TransportNativeHID::new()?;
-    let transport = APDUTransport::new(hid);
+    let transport = TransportNativeHID::new(&hidapi::HidApi::new()?)?;
 
     let command = apdu_get_version();
 
-    let resp = transport.exchange(&command).await?;
-    println!("{:?}", resp);
+    let resp = transport.exchange(&command)?;
 
-    let resp = if resp.retcode != 0x9000 {
-        Err(Error::Custom(
-            map_apdu_error_description(resp.retcode).to_owned(),
-        ))
-    } else {
-        Ok(process_version(&resp.data))
+    let resp = match resp.error_code() {
+        Ok(APDUErrorCode::NoError) => Ok(process_version(resp.data())),
+        _ => Err(anyhow::anyhow!("{:?}", resp.error_code())),
     };
 
-    Ok(resp?)
+    resp
 }
 
 pub async fn get_pub_key(
@@ -133,22 +125,17 @@ pub async fn get_pub_key(
     derivation_path: &DerivationPath,
     show_address: bool,
 ) -> Result<(Vec<u8>, String)> {
-    let hid = TransportNativeHID::new()?;
-    let transport = APDUTransport::new(hid);
+    let transport = TransportNativeHID::new(&hidapi::HidApi::new()?)?;
     let command = apdu_ins_get_addr_secp256k1(hrp, derivation_path, show_address);
 
-    let resp = transport.exchange(&command).await?;
-    println!("{:?}", resp);
+    let resp = transport.exchange(&command)?;
 
-    let resp = if resp.retcode != 0x9000 {
-        Err(Error::Custom(
-            map_apdu_error_description(resp.retcode).to_owned(),
-        ))
-    } else {
-        Ok(process_pub_key(&resp.data))
+    let resp = match resp.error_code() {
+        Ok(APDUErrorCode::NoError) => Ok(process_pub_key(resp.data())),
+        _ => Err(anyhow::anyhow!("{:?}", resp.error_code())),
     };
 
-    Ok(resp?)
+    resp
 }
 
 pub fn transform_der_to_ber(bytes: &[u8]) -> Result<[u8; 64]> {
@@ -178,40 +165,48 @@ pub fn transform_der_to_ber(bytes: &[u8]) -> Result<[u8; 64]> {
     //     big_s = big_s_p;
     // }
 
-    // let s: Vec<u8> = big_s.to_uint_array().into_iter().map(|x| x.to_be_bytes()).flatten().collect();
+    // let s: Vec<u8> = big_s.to_uint_array().into_iter().flat_map(|x| x.to_be_bytes()).collect();
 
-    let r = r.iter().skip_while(|&x| x == &0);
-    let s = s.iter().skip_while(|&x| x == &0);
-
-    Ok(r.chain(s)
+    let r = r
+        .iter()
+        .skip_while(|&x| x == &0)
         .cloned()
-        .collect::<Vec<_>>()
-        .try_into()
-        .expect("error"))
+        .collect::<Vec<_>>();
+    let s = s
+        .iter()
+        .skip_while(|&x| x == &0)
+        .cloned()
+        .collect::<Vec<_>>();
+
+    let mut fin_value = [0; 64];
+
+    fin_value[32 - r.len()..32].copy_from_slice(&r);
+    fin_value[64 - s.len()..64].copy_from_slice(&s);
+
+    Ok(fin_value)
+
+    // Ok(r.chain(s)
+    //     .cloned()
+    //     .collect::<Vec<_>>()
+    //     .try_into()
+    //     .expect("error"))
 }
 
 pub async fn get_signature(payload: Value, derivation_path: &DerivationPath) -> Result<[u8; 64]> {
     let commands = apdu_sign_secp256k1(payload, derivation_path);
-    let hid = TransportNativeHID::new()?;
-    let transport = APDUTransport::new(hid);
+    let transport = TransportNativeHID::new(&hidapi::HidApi::new()?)?;
 
-    let mut resp = APDUAnswer {
-        data: Default::default(),
-        retcode: Default::default(),
+    let resps: Vec<_> = commands
+        .into_iter()
+        .map(|command| transport.exchange(&command))
+        .collect::<std::result::Result<_, _>>()?;
+
+    let resp = resps.last().unwrap();
+
+    let resp = match resp.error_code() {
+        Ok(APDUErrorCode::NoError) => Ok(transform_der_to_ber(resp.data())?),
+        _ => Err(anyhow::anyhow!("{:?}", resp.error_code())),
     };
 
-    for command in commands {
-        resp = transport.exchange(&command).await?;
-        println!("{:?}", resp);
-    }
-
-    let resp = if resp.retcode != 0x9000 {
-        Err(Error::Custom(
-            map_apdu_error_description(resp.retcode).to_owned(),
-        ))
-    } else {
-        Ok(transform_der_to_ber(&resp.data)?)
-    };
-
-    Ok(resp?)
+    resp
 }
