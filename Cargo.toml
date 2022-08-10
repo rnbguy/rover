@@ -29,10 +29,12 @@ regex = "1.6.0"
 requestty = "0.4.1"
 ripemd = "0.1.1"
 rpassword = "7.0.0"
+secp256k1 = "0.24.0"
 serde = { version = "1.0.143", features = ["derive"] }
 serde_json = "1.0.83"
 serde_yaml = "0.9.4"
 sha2 = "0.10.2"
+sha3 = "0.10.2"
 tendermint = "0.23.9"
 tendermint-rpc = { version = "0.23.9", features = ["http-client"] }
 tokio = { version = "1.20.1", features = ["rt-multi-thread"] }

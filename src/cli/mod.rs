@@ -7,7 +7,7 @@ use cosmos_sdk_proto::cosmos::base::v1beta1::Coin;
 use crate::{
     account::{Account, KeyStoreBackend},
     endpoint::{get_rpc_endpoints, transform_to_grpc_endpoint},
-    keys::save_key_to_os_from_mmseed,
+    keys::{save_key_to_os_from_mmseed, AddressType},
     query::{get_chain_id_info, get_chain_id_rpc, get_rpc_endpoint_chain_info},
     utils::{read_data_from_yaml, write_data_as_yaml},
     Result,
@@ -42,6 +42,8 @@ pub enum Args {
         #[clap(parse(try_from_str = custom_keystorebackend))]
         keystore: KeyStoreBackend,
         key: String,
+        #[clap(value_enum)]
+        addr_type: AddressType,
     },
     AddChain {
         chain_id: String,
@@ -134,7 +136,11 @@ impl Args {
                     .run(chain_id, executor.as_deref(), rpc.as_deref(), fee.as_ref())
                     .await
             }
-            Self::AddAccount { keystore, key } => {
+            Self::AddAccount {
+                keystore,
+                key,
+                addr_type,
+            } => {
                 let project_dir = directories::ProjectDirs::from("systems", "rnbguy", "rover")
                     .context("project dir")?;
                 let data_local_dir = project_dir.data_local_dir();
@@ -143,7 +149,7 @@ impl Args {
                 let accounts_path_str = accounts_path.to_str().context("project path")?;
                 let mut accounts: HashMap<String, Account> =
                     read_data_from_yaml(accounts_path_str).unwrap_or_default();
-                let new_account = Account::new(keystore.clone()).await?;
+                let new_account = Account::new(keystore.clone(), addr_type).await?;
                 accounts.insert(key.into(), new_account);
                 write_data_as_yaml(accounts_path_str, accounts)?;
                 println!("Added to {}", accounts_path_str);

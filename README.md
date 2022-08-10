@@ -46,6 +46,11 @@ rover tx cosmoshub-4 [grantee_address] vote my_account 1:Yes 2:Abstain 3:No
   - [x] OS Keystore via [keyring](https://lib.rs/crates/keyring)
   - [x] Memory backend
   - [x] Ledger via [ledger-transport](https://lib.rs/crates/ledger-transport)
+  - [x] Address derivation
+    - [x] Secret
+    - [x] Terra
+    - [x] Cro
+    - [x] Evmos (Ethereum)
 - [x] All types of endpoint support
   - [x] RPC
   - [x] GRPC

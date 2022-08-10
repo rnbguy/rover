@@ -9,7 +9,10 @@ use cosmos_sdk_proto::prost_wkt_types::Any;
 use std::str::FromStr;
 
 use crate::{
-    keys::{from_pk_to_bech32_address, get_priv_key_from_memory, get_priv_key_from_os},
+    keys::{
+        from_pk_bytes_to_address, get_priv_key_from_memory, get_priv_key_from_os,
+        get_uncompressed_pub_key_from_memory, get_uncompressed_pub_key_from_os, AddressType,
+    },
     ledger::{get_pub_key, get_signature},
     txs::{
         create_transaction, generate_auth_info, generate_legacy_amino_json,
@@ -59,12 +62,25 @@ impl KeyStoreBackend {
                     &DerivationPath::from_str("m/44'/118'/0'/0/0")?,
                     false,
                 )
-                .await?
-                .0,
+                .await?[..33],
             )
             .expect("bip32 error"),
             Self::Os(key) => get_priv_key_from_os(key)?.public_key(),
             Self::Memory(key) => get_priv_key_from_memory(key)?.public_key(),
+        })
+    }
+
+    pub async fn uncompressed_public_key_bytes(&self) -> Result<Vec<u8>> {
+        Ok(match &self {
+            Self::Ledger => get_pub_key(
+                "cosmos",
+                &DerivationPath::from_str("m/44'/118'/0'/0/0")?,
+                false,
+            )
+            .await?[1..]
+                .to_vec(),
+            Self::Os(key) => get_uncompressed_pub_key_from_os(key)?,
+            Self::Memory(key) => get_uncompressed_pub_key_from_memory(key)?,
         })
     }
 }
@@ -76,9 +92,15 @@ pub struct Account {
 }
 
 impl Account {
-    pub async fn new(private_key_backend: KeyStoreBackend) -> Result<Self> {
-        let public_key = private_key_backend.public_key().await?;
-        let address = from_pk_to_bech32_address(&public_key, "cosmos")?;
+    pub async fn new(
+        private_key_backend: KeyStoreBackend,
+        addr_type: &AddressType,
+    ) -> Result<Self> {
+        let public_key = match addr_type {
+            AddressType::Cosmos => private_key_backend.public_key().await?.to_bytes().to_vec(),
+            AddressType::Ethereum => private_key_backend.uncompressed_public_key_bytes().await?,
+        };
+        let address = from_pk_bytes_to_address(&public_key, addr_type)?;
         Ok(Self {
             cosmos_address: address,
             private_key_backend,

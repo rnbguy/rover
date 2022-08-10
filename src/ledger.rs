@@ -124,18 +124,16 @@ pub async fn get_pub_key(
     hrp: &str,
     derivation_path: &DerivationPath,
     show_address: bool,
-) -> Result<(Vec<u8>, String)> {
+) -> Result<Vec<u8>> {
     let transport = TransportNativeHID::new(&hidapi::HidApi::new()?)?;
     let command = apdu_ins_get_addr_secp256k1(hrp, derivation_path, show_address);
 
     let resp = transport.exchange(&command)?;
 
-    let resp = match resp.error_code() {
-        Ok(APDUErrorCode::NoError) => Ok(process_pub_key(resp.data())),
+    match resp.error_code() {
+        Ok(APDUErrorCode::NoError) => Ok(resp.data().to_vec()),
         _ => Err(anyhow::anyhow!("{:?}", resp.error_code())),
-    };
-
-    resp
+    }
 }
 
 pub fn transform_der_to_ber(bytes: &[u8]) -> Result<[u8; 64]> {
