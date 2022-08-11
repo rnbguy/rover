@@ -1,3 +1,4 @@
+use anyhow::Context;
 use cosmos_sdk_proto::cosmos::base::abci::v1beta1::TxResponse;
 use cosmos_sdk_proto::cosmos::tx::v1beta1::{
     service_client::ServiceClient, BroadcastTxRequest, BroadcastTxResponse,
@@ -34,7 +35,7 @@ pub async fn broadcast_via_tendermint_rpc(
     endpoint: &str,
     signed_tx: &Tx,
 ) -> Result<TendermintResponse> {
-    let rpc_client = HttpClient::new(endpoint).unwrap();
+    let rpc_client = HttpClient::new(endpoint).context("invalid endpoint")?;
 
     Ok(rpc_client
         .broadcast_tx_sync(signed_tx.try_encoded()?.into())
@@ -63,7 +64,7 @@ pub async fn simulate_via_tendermint_rpc<Q>(endpoint: &str, query: Q) -> Result<
 where
     Q: Serialize + MessageSerde,
 {
-    let rpc_client = tendermint_rpc::HttpClient::new(endpoint).unwrap();
+    let rpc_client = tendermint_rpc::HttpClient::new(endpoint).context("no endpoint")?;
 
     let resp = rpc_client
         .abci_query(
@@ -79,11 +80,10 @@ where
 
     let val: serde_json::Value = serde_json::from_slice(&resp.value)?;
 
-    Ok(val
-        .pointer("/gas_info/gas_used")
-        .unwrap()
+    val.pointer("/gas_info/gas_used")
+        .context("invalid pointer")?
         .as_str()
-        .unwrap()
+        .context("not str")?
         .parse()
-        .unwrap())
+        .context("parse failed")
 }

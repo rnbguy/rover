@@ -1,3 +1,4 @@
+use anyhow::Context;
 use bip32::secp256k1::ecdsa::{signature::Signer, signature::Verifier, Signature};
 
 use cosmos_sdk_proto::cosmos::tx::v1beta1::{AuthInfo, TxBody};
@@ -66,20 +67,20 @@ pub fn generate_auth_info(
     })
 }
 
-pub fn set_fee(fee: (u128, &str), tx: &Tx) -> Tx {
+pub fn set_fee(fee: (u128, &str), tx: &Tx) -> Result<Tx> {
     let mut tx = tx.clone();
     tx.auth_info
         .as_mut()
-        .unwrap()
+        .context("no auth_info")?
         .fee
         .as_mut()
-        .unwrap()
+        .context("no fee")?
         .amount
         .push(Coin {
             denom: fee.1.to_string(),
             amount: fee.0.to_string(),
         });
-    tx
+    Ok(tx)
 }
 
 pub fn generate_signature_from_sign_doc<K>(sign_doc: SignDoc, priv_key: &K) -> Result<[u8; 64]>
@@ -97,8 +98,12 @@ pub fn update_signature(mut tx: Tx, signature: &[u8; 64]) -> Tx {
 
 pub fn generate_sign_doc(tx: &Tx, chain_id: &str, account_number: u64) -> Result<SignDoc> {
     Ok(SignDoc {
-        body_bytes: tx.body.as_ref().unwrap().try_encoded()?,
-        auth_info_bytes: tx.auth_info.as_ref().unwrap().try_encoded()?,
+        body_bytes: tx.body.as_ref().context("no body")?.try_encoded()?,
+        auth_info_bytes: tx
+            .auth_info
+            .as_ref()
+            .context("no auth_info")?
+            .try_encoded()?,
         chain_id: chain_id.into(),
         account_number,
     })
@@ -141,27 +146,27 @@ fn is_registered(msg_type: &str) -> bool {
     .any(|x| x == msg_type)
 }
 
-fn amino_json(mut msg: Value) -> Value {
-    let map = msg.as_object_mut().unwrap();
+fn amino_json(mut msg: Value) -> Result<Value> {
+    let map = msg.as_object_mut().context("not object")?;
 
-    let (_, msg_type) = map.remove_entry("@type").unwrap();
-    let msg_type = msg_type.as_str().unwrap();
+    let (_, msg_type) = map.remove_entry("@type").context("no entry")?;
+    let msg_type = msg_type.as_str().context("not str")?;
 
     remove_type(&mut msg);
 
     if is_registered(msg_type) {
-        let split_msg_type = msg_type.rsplit_once('.').unwrap().1;
+        let split_msg_type = msg_type.rsplit_once('.').context(". not split")?.1;
         let split_msg_type = match split_msg_type {
             "MsgWithdrawDelegatorReward" => "MsgWithdrawDelegationReward",
             _ => split_msg_type,
         };
         let msg_type = format!("cosmos-sdk/{}", split_msg_type);
-        serde_json::json!({
+        Ok(serde_json::json!({
             "type": msg_type,
             "value": msg,
-        })
+        }))
     } else {
-        msg
+        Ok(msg)
     }
 }
 
@@ -192,20 +197,27 @@ pub fn generate_legacy_amino_json(
     chain_id: &str,
     account_number: u64,
 ) -> Result<serde_json::Value> {
-    let sequence = tx.auth_info.as_ref().unwrap().signer_infos[0].sequence;
+    let sequence = tx.auth_info.as_ref().context("no auth_info")?.signer_infos[0].sequence;
     let gas = tx
         .auth_info
         .as_ref()
-        .unwrap()
+        .context("no auth_info")?
         .fee
         .as_ref()
-        .unwrap()
+        .context("no fee")?
         .gas_limit;
-    let fee_amount = &tx.auth_info.as_ref().unwrap().fee.as_ref().unwrap().amount;
-    let msgs: Vec<_> = tx
+    let fee_amount = &tx
+        .auth_info
+        .as_ref()
+        .context("no auth_info")?
+        .fee
+        .as_ref()
+        .context("no fee")?
+        .amount;
+    let msgs: Result<Vec<_>> = tx
         .body
         .as_ref()
-        .unwrap()
+        .context("no body")?
         .messages
         .iter()
         .map(|x| serde_json::to_value(x).expect("error"))
@@ -224,7 +236,7 @@ pub fn generate_legacy_amino_json(
         "gas": gas.to_string()
       },
       "memo": "",
-      "msgs": msgs,
+      "msgs": msgs?,
       "sequence": sequence.to_string()
     });
 
@@ -242,7 +254,7 @@ pub async fn get_account_number_and_sequence(
     let bacc = info
         .account
         .clone()
-        .unwrap()
+        .context("no account")?
         .unpack_as(BaseAccount::default())
         .or_else(|_| {
             info.account
@@ -260,11 +272,11 @@ pub async fn get_account_number_and_sequence(
     ))
 }
 
-pub fn update_tx_with_gas(mut tx: Tx, gas: u64) -> Tx {
-    let auth_info = tx.auth_info.as_mut().unwrap();
-    let fee = auth_info.fee.as_mut().unwrap();
+pub fn update_tx_with_gas(mut tx: Tx, gas: u64) -> Result<Tx> {
+    let auth_info = tx.auth_info.as_mut().context("no auth_info")?;
+    let fee = auth_info.fee.as_mut().context("no fee")?;
     fee.gas_limit = gas;
-    tx
+    Ok(tx)
 }
 
 pub fn create_transaction(body: TxBody, auth_info: AuthInfo) -> Tx {

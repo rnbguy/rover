@@ -73,13 +73,12 @@ impl Transaction {
         let accounts_path = data_local_dir.join("accounts.yaml");
         let accounts_path_str = accounts_path.to_str().context("project path")?;
 
-        let accounts: HashMap<String, Account> = read_data_from_yaml(accounts_path_str).unwrap();
+        let accounts: HashMap<String, Account> = read_data_from_yaml(accounts_path_str)?;
 
         let chains_path = data_local_dir.join("chains.yaml");
         let chains_path_str = chains_path.to_str().context("project path")?;
 
-        let chains: HashMap<String, crate::chain::Chain> =
-            read_data_from_yaml(chains_path_str).unwrap();
+        let chains: HashMap<String, crate::chain::Chain> = read_data_from_yaml(chains_path_str)?;
 
         let config_dir = project_dir.config_dir();
         let config_path = config_dir.join("config.yaml");
@@ -88,7 +87,7 @@ impl Transaction {
         println!("{:?}", accounts_path_str);
         println!("{:?}", accounts);
 
-        let config: HashMap<String, String> = read_data_from_yaml(config_path_str).unwrap();
+        let config: HashMap<String, String> = read_data_from_yaml(config_path_str)?;
         let graphql_endpoint = config.get("graphql").expect("not exists");
 
         let chain = chains.get(chain_id).expect("no chain?");
@@ -286,7 +285,10 @@ impl Transaction {
                                 .map(|vote| {
                                     Ok(Any::try_pack(MsgVote {
                                         proposal_id: vote.proposal_id,
-                                        voter: accounts.get(voter).unwrap().address(hrp)?,
+                                        voter: accounts
+                                            .get(voter)
+                                            .context("voter is not in accounts")?
+                                            .address(hrp)?,
                                         option: vote.option.into(),
                                     })?)
                                 })
@@ -364,8 +366,10 @@ impl Transaction {
                     )
                     .await?;
 
-                    let unsigned_tx =
-                        crate::txs::update_tx_with_gas(unsigned_tx, needed_gas + (needed_gas >> 2));
+                    let unsigned_tx = crate::txs::update_tx_with_gas(
+                        unsigned_tx,
+                        needed_gas + (needed_gas >> 2),
+                    )?;
 
                     let signed_tx = owner
                         .sign_unsigned_transaction(&unsigned_tx, chain_id, account_number)

@@ -156,7 +156,8 @@ impl Args {
                 Ok(())
             }
             Self::AddKeyToOs { key, coin_type } => {
-                let mmseed = rpassword::prompt_password("Mnemonic 🔑: ").unwrap();
+                let mmseed =
+                    rpassword::prompt_password("Mnemonic 🔑: ").context("unable to read")?;
                 save_key_to_os_from_mmseed(mmseed.trim(), key, *coin_type)?;
                 Ok(())
             }
@@ -297,15 +298,15 @@ impl Args {
 
                 for emeris_chain in emeris_chains
                     .pointer("/chains")
-                    .unwrap()
+                    .context("invalid /chains key")?
                     .as_array()
-                    .unwrap()
+                    .context("not array")?
                 {
                     let chain_name = emeris_chain
                         .pointer("/chain_name")
-                        .unwrap()
+                        .context("not /chain_name")?
                         .as_str()
-                        .unwrap();
+                        .context("not str")?;
 
                     let data: serde_json::Value =
                         ureq::get(&format!("https://api.emeris.com/v1/chain/{chain_name}"))
@@ -314,20 +315,20 @@ impl Args {
 
                     let chain_id = data
                         .pointer("/chain/node_info/chain_id")
-                        .unwrap()
+                        .context("not /chain/node_info/chain_id key")?
                         .as_str()
-                        .unwrap();
+                        .context("not str")?;
                     let prefix = data
                         .pointer("/chain/node_info/bech32_config/prefix_account")
-                        .unwrap()
+                        .context("not valid key")?
                         .as_str()
-                        .unwrap();
+                        .context("not str")?;
                     let fee = &0;
                     let denom = data
                         .pointer("/chain/denoms")
-                        .unwrap()
+                        .context("not valid key")?
                         .as_array()
-                        .unwrap()
+                        .context("not array")?
                         .iter()
                         .find(|x| {
                             x.pointer("/fee_token")
@@ -335,11 +336,11 @@ impl Args {
                                 .as_bool()
                                 .unwrap()
                         })
-                        .unwrap()
+                        .context("couldn't find")?
                         .pointer("/name")
-                        .unwrap()
+                        .context("invalid key")?
                         .as_str()
-                        .unwrap();
+                        .context("not str")?;
 
                     chains.insert(
                         chain_id.into(),
@@ -369,8 +370,16 @@ impl Args {
                     .call()?
                     .into_json()?;
 
-                for cd_chain in cd_chains.pointer("/chains").unwrap().as_array().unwrap() {
-                    let chain_name = cd_chain.pointer("/name").and_then(|x| x.as_str()).unwrap();
+                for cd_chain in cd_chains
+                    .pointer("/chains")
+                    .context("no chain key")?
+                    .as_array()
+                    .context("not array")?
+                {
+                    let chain_name = cd_chain
+                        .pointer("/name")
+                        .and_then(|x| x.as_str())
+                        .context("no name key")?;
 
                     let data: serde_json::Value =
                         ureq::get(&format!("https://chains.cosmos.directory/{chain_name}"))

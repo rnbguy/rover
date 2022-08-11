@@ -1,3 +1,4 @@
+use anyhow::Context;
 use bip32::DerivationPath;
 
 use ledger_transport_hid::{hidapi, TransportNativeHID};
@@ -22,14 +23,14 @@ pub fn apdu_get_version() -> APDUCommand<Vec<u8>> {
     }
 }
 
-pub fn process_version(bytes: &[u8]) -> (u8, u16, u16, u16, u16) {
-    (
+pub fn process_version(bytes: &[u8]) -> Result<(u8, u16, u16, u16, u16)> {
+    Ok((
         bytes[0],
-        u16::from_le_bytes(bytes[1..3].try_into().unwrap()),
-        u16::from_le_bytes(bytes[3..5].try_into().unwrap()),
-        u16::from_le_bytes(bytes[5..7].try_into().unwrap()),
-        u16::from_le_bytes(bytes[7..9].try_into().unwrap()),
-    )
+        u16::from_le_bytes(bytes[1..3].try_into().context("no error")?),
+        u16::from_le_bytes(bytes[3..5].try_into().context("no error")?),
+        u16::from_le_bytes(bytes[5..7].try_into().context("no error")?),
+        u16::from_le_bytes(bytes[7..9].try_into().context("no error")?),
+    ))
 }
 
 pub fn apdu_ins_get_addr_secp256k1(
@@ -57,17 +58,17 @@ pub fn apdu_ins_get_addr_secp256k1(
     }
 }
 
-pub fn process_pub_key(bytes: &[u8]) -> (Vec<u8>, String) {
-    (
+pub fn process_pub_key(bytes: &[u8]) -> Result<(Vec<u8>, String)> {
+    Ok((
         bytes[..33].to_vec(),
-        String::from_utf8(bytes[33..].to_vec()).unwrap(),
-    )
+        String::from_utf8(bytes[33..].to_vec()).context("couldn't convert to string")?,
+    ))
 }
 
 pub fn apdu_sign_secp256k1(
     payload: Value,
     derivation_path: &DerivationPath,
-) -> Vec<APDUCommand<Vec<u8>>> {
+) -> Result<Vec<APDUCommand<Vec<u8>>>> {
     let mut commands = vec![];
 
     let mut bytes = vec![];
@@ -84,7 +85,7 @@ pub fn apdu_sign_secp256k1(
         data: bytes,
     });
 
-    let payload_str = serde_json::to_string(&payload).unwrap();
+    let payload_str = serde_json::to_string(&payload)?;
 
     let payload = payload_str.into_bytes();
     let chunks = payload.as_slice().chunks(64);
@@ -102,7 +103,7 @@ pub fn apdu_sign_secp256k1(
             data: chunks.to_vec(),
         });
     }
-    commands
+    Ok(commands)
 }
 
 pub async fn get_version() -> Result<(u8, u16, u16, u16, u16)> {
@@ -112,12 +113,10 @@ pub async fn get_version() -> Result<(u8, u16, u16, u16, u16)> {
 
     let resp = transport.exchange(&command)?;
 
-    let resp = match resp.error_code() {
-        Ok(APDUErrorCode::NoError) => Ok(process_version(resp.data())),
+    match resp.error_code() {
+        Ok(APDUErrorCode::NoError) => process_version(resp.data()),
         _ => Err(anyhow::anyhow!("{:?}", resp.error_code())),
-    };
-
-    resp
+    }
 }
 
 pub async fn get_pub_key(
@@ -157,7 +156,7 @@ pub fn transform_der_to_ber(bytes: &[u8]) -> Result<[u8; 64]> {
     // let curve_order = bip32::secp256k1::Secp256k1::ORDER;
 
     // let mut big_s = UInt::from_be_slice(s);
-    // let big_s_p = curve_order.checked_sub(&big_s).unwrap();
+    // let big_s_p = curve_order.checked_sub(&big_s).context("no checked_sub")?;
 
     // if big_s.ge(&big_s_p) {
     //     big_s = big_s_p;
@@ -191,7 +190,7 @@ pub fn transform_der_to_ber(bytes: &[u8]) -> Result<[u8; 64]> {
 }
 
 pub async fn get_signature(payload: Value, derivation_path: &DerivationPath) -> Result<[u8; 64]> {
-    let commands = apdu_sign_secp256k1(payload, derivation_path);
+    let commands = apdu_sign_secp256k1(payload, derivation_path)?;
     let transport = TransportNativeHID::new(&hidapi::HidApi::new()?)?;
 
     let resps: Vec<_> = commands
@@ -199,7 +198,7 @@ pub async fn get_signature(payload: Value, derivation_path: &DerivationPath) -> 
         .map(|command| transport.exchange(&command))
         .collect::<std::result::Result<_, _>>()?;
 
-    let resp = resps.last().unwrap();
+    let resp = resps.last().context("no last")?;
 
     match resp.error_code() {
         Ok(APDUErrorCode::NoError) => Ok(transform_der_to_ber(resp.data())?),

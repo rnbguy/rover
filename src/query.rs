@@ -134,8 +134,8 @@ pub async fn get_delegated(address: &str, endpoint: &str) -> Result<Vec<(String,
         .into_iter()
         .map(|c| {
             Ok((
-                c.delegation.unwrap().validator_address,
-                c.balance.unwrap().amount.parse()?,
+                c.delegation.context("no delegation")?.validator_address,
+                c.balance.context("no balance")?.amount.parse()?,
             ))
         })
         .collect::<Result<Vec<_>>>()
