@@ -201,10 +201,8 @@ pub async fn get_signature(payload: Value, derivation_path: &DerivationPath) -> 
 
     let resp = resps.last().unwrap();
 
-    let resp = match resp.error_code() {
+    match resp.error_code() {
         Ok(APDUErrorCode::NoError) => Ok(transform_der_to_ber(resp.data())?),
         _ => Err(anyhow::anyhow!("{:?}", resp.error_code())),
-    };
-
-    resp
+    }
 }
