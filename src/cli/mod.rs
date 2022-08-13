@@ -29,6 +29,8 @@ pub enum Args {
         chain_id: String,
     },
     Tx {
+        #[clap(short = 'n', long)]
+        dry_run: bool,
         chain_id: String,
         executor: Option<String>,
         #[clap(long, short)]
@@ -126,6 +128,7 @@ impl Args {
             }
             Self::RefreshEndpoint { .. } => todo!(),
             Self::Tx {
+                dry_run,
                 chain_id,
                 executor,
                 transaction,
@@ -133,7 +136,13 @@ impl Args {
                 fee,
             } => {
                 transaction
-                    .run(chain_id, executor.as_deref(), rpc.as_deref(), fee.as_ref())
+                    .run(
+                        *dry_run,
+                        chain_id,
+                        executor.as_deref(),
+                        rpc.as_deref(),
+                        fee.as_ref(),
+                    )
                     .await
             }
             Self::AddAccount {

@@ -38,7 +38,7 @@ pub enum Transaction {
         account: String,
         source: String,
         target: String,
-        amount: u128,
+        amount: Option<u128>,
     },
     Grant {
         granter: String,
@@ -61,6 +61,7 @@ pub enum Transaction {
 impl Transaction {
     pub async fn run(
         &self,
+        dry_run: bool,
         chain_id: &str,
         executor: Option<&str>,
         rpc: Option<&str>,
@@ -232,13 +233,25 @@ impl Transaction {
                             let account = account_acc.address(hrp)?;
                             let mut any_msgs = vec![];
 
+                            let final_amount = match amount {
+                                Some(value) => *value,
+                                None => {
+                                    let m: HashMap<_, _> =
+                                        crate::query::get_delegated(&account, rpc_endpoint)
+                                            .await?
+                                            .into_iter()
+                                            .collect();
+                                    m[source]
+                                }
+                            };
+
                             let redelegate_msg = MsgBeginRedelegate {
                                 delegator_address: account,
                                 validator_src_address: source.into(),
                                 validator_dst_address: target.into(),
                                 amount: Some(Coin {
                                     denom: denom.into(),
-                                    amount: amount.to_string(),
+                                    amount: final_amount.to_string(),
                                 }),
                             };
 
@@ -388,55 +401,60 @@ impl Transaction {
 
         println!("{}", serde_json::to_string_pretty(&signed_tx)?);
 
-        let _rpc_result = futures::stream::iter(rpc_endpoints.iter())
-            .then(|(_, rpc_endpoint)| {
-                let signed_tx = signed_tx.clone();
-                async move {
-                    println!("broadcasting trying with {}", &rpc_endpoint);
-                    let resp = tokio::time::timeout(
-                        std::time::Duration::from_secs(5),
-                        crate::broadcast::broadcast_via_tendermint_rpc(rpc_endpoint, &signed_tx),
-                    )
-                    .await??;
+        if !dry_run {
+            let _rpc_result = futures::stream::iter(rpc_endpoints.iter())
+                .then(|(_, rpc_endpoint)| {
+                    let signed_tx = signed_tx.clone();
+                    async move {
+                        println!("broadcasting trying with {}", &rpc_endpoint);
+                        let resp = tokio::time::timeout(
+                            std::time::Duration::from_secs(5),
+                            crate::broadcast::broadcast_via_tendermint_rpc(
+                                rpc_endpoint,
+                                &signed_tx,
+                            ),
+                        )
+                        .await??;
 
-                    println!("{:?}", resp);
+                        println!("{:?}", resp);
 
-                    (resp.code.is_ok())
-                        .then(|| rpc_endpoint)
-                        .context("this endpoint does not work")?;
-                    Result::Ok(())
-                }
-            })
-            .filter_map(|x| async { x.ok() })
-            .boxed_local()
-            .next()
-            .await;
-        // if rpc_result.is_none() {
-        //     futures::stream::iter(["https://api-meme-1.meme.sx"])
-        //         .then(|rest_endpoint| {
-        //             let signed_tx = signed_tx.clone();
-        //             async move {
-        //                 println!("broadcasting trying with rest {}", &rest_endpoint);
-        //                 let resp = tokio::time::timeout(
-        //                     std::time::Duration::from_secs(5),
-        //                     crate::broadcast::broadcast_via_rest(rest_endpoint, &signed_tx),
-        //                 )
-        //                 .await??;
+                        (resp.code.is_ok())
+                            .then(|| rpc_endpoint)
+                            .context("this endpoint does not work")?;
+                        Result::Ok(())
+                    }
+                })
+                .filter_map(|x| async { x.ok() })
+                .boxed_local()
+                .next()
+                .await;
+            // if rpc_result.is_none() {
+            //     futures::stream::iter(["https://api-meme-1.meme.sx"])
+            //         .then(|rest_endpoint| {
+            //             let signed_tx = signed_tx.clone();
+            //             async move {
+            //                 println!("broadcasting trying with rest {}", &rest_endpoint);
+            //                 let resp = tokio::time::timeout(
+            //                     std::time::Duration::from_secs(5),
+            //                     crate::broadcast::broadcast_via_rest(rest_endpoint, &signed_tx),
+            //                 )
+            //                 .await??;
 
-        //                 println!("{:?}", resp);
+            //                 println!("{:?}", resp);
 
-        //                 (resp.code == 0).then(|| rest_endpoint).context(
-        //                     "this endpoint does not work"
-        //                 )?;
-        //                 Result::Ok(())
-        //             }
-        //         })
-        //         .filter_map(|x| async { x.ok() })
-        //         .boxed_local()
-        //         .next()
-        //         .await
-        //         .expect("not able to broadcast");
-        // }
+            //                 (resp.code == 0).then(|| rest_endpoint).context(
+            //                     "this endpoint does not work"
+            //                 )?;
+            //                 Result::Ok(())
+            //             }
+            //         })
+            //         .filter_map(|x| async { x.ok() })
+            //         .boxed_local()
+            //         .next()
+            //         .await
+            //         .expect("not able to broadcast");
+            // }
+        }
 
         Ok(())
     }
