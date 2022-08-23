@@ -59,7 +59,9 @@ pub enum Args {
     AddRPCInfo {
         endpoint: String,
     },
-    ListZonesFromMapOfZones,
+    ListZonesFromMapOfZones {
+        search: Option<String>,
+    },
     AddChainFromEmeris,
     AddChainFromCosmosDirectory,
     AddChainFromPingPub,
@@ -269,7 +271,7 @@ impl Args {
                 Ok(())
             }
 
-            Self::ListZonesFromMapOfZones => {
+            Self::ListZonesFromMapOfZones { search } => {
                 let project_dir = directories::ProjectDirs::from("systems", "rnbguy", "rover")
                     .context("project dir")?;
                 let data_local_dir = project_dir.data_local_dir();
@@ -283,7 +285,12 @@ impl Args {
                     read_data_from_yaml(config_path_str).unwrap_or_default();
                 let graphql_endpoint = config.get("graphql").expect("not exists");
 
-                let zones = crate::endpoint::get_zone_ids(graphql_endpoint).await?;
+                let mut zones = crate::endpoint::get_zone_ids(graphql_endpoint).await?;
+
+                if let Some(s) = search {
+                    zones.sort_unstable_by_key(|x| levenshtein::levenshtein(x, s));
+                    zones = zones.into_iter().take(5).collect();
+                }
 
                 zones.into_iter().for_each(|zone| println!("{zone}"));
 
