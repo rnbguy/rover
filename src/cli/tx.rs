@@ -40,7 +40,20 @@ pub enum Transaction {
         target: String,
         amount: Option<u128>,
     },
+    RestakeApp {
+        granter: String,
+        grantee: String,
+        validator: String,
+    },
+    RestakeAppRevoke {
+        granter: String,
+        grantee: String,
+    },
     Grant {
+        granter: String,
+        grantee: String,
+    },
+    Revoke {
         granter: String,
         grantee: String,
     },
@@ -259,6 +272,31 @@ impl Transaction {
 
                             (account_acc, any_msgs)
                         }
+                        Self::RestakeApp {
+                            granter: granter_key,
+                            grantee,
+                            validator,
+                        } => {
+                            let granter_acc = accounts.get(granter_key).expect("not exists");
+                            let granter = granter_acc.address(hrp)?;
+
+                            let restake_app_msg =
+                                crate::msg::restake_app_auth(&granter, grantee, validator)?;
+
+                            (granter_acc, vec![Any::try_pack(restake_app_msg)?])
+                        }
+                        Self::RestakeAppRevoke {
+                            granter: granter_key,
+                            grantee,
+                        } => {
+                            let granter_acc = accounts.get(granter_key).expect("not exists");
+                            let granter = granter_acc.address(hrp)?;
+
+                            let restake_app_msg =
+                                crate::msg::restake_app_auth_revoke(&granter, grantee)?;
+
+                            (granter_acc, vec![Any::try_pack(restake_app_msg)?])
+                        }
                         Self::Grant {
                             granter: granter_key,
                             grantee: grantee_key,
@@ -288,6 +326,35 @@ impl Transaction {
                             let unit = crate::msg::unit_transfer(&granter, &grantee, denom)?;
 
                             any_msgs.push(Any::try_pack(unit)?);
+
+                            (granter_acc, any_msgs)
+                        }
+                        Self::Revoke {
+                            granter: granter_key,
+                            grantee: grantee_key,
+                        } => {
+                            let granter_acc = accounts.get(granter_key).expect("not exists");
+                            let grantee_acc = accounts.get(grantee_key).expect("not exists");
+
+                            let granter = granter_acc.address(hrp)?;
+                            let grantee = grantee_acc.address(hrp)?;
+
+                            let mut any_msgs = vec![];
+
+                            let revoke_msgs =
+                                crate::msg::generate_usual_revoke(&granter, &grantee)?;
+
+                            any_msgs.extend(
+                                revoke_msgs
+                                    .into_iter()
+                                    .map(|x| Ok(Any::try_pack(x)?))
+                                    .collect::<Result<Vec<_>>>()?,
+                            );
+
+                            let fee_revoke_allowance =
+                                crate::msg::generate_revoke_feeallowance(&granter, &grantee)?;
+
+                            any_msgs.push(Any::try_pack(fee_revoke_allowance)?);
 
                             (granter_acc, any_msgs)
                         }
@@ -419,7 +486,7 @@ impl Transaction {
                         println!("{:?}", resp);
 
                         (resp.code.is_ok())
-                            .then(|| rpc_endpoint)
+                            .then_some(rpc_endpoint)
                             .context("this endpoint does not work")?;
                         Result::Ok(())
                     }
