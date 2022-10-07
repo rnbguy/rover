@@ -9,16 +9,16 @@ license-file = "LICENSE"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = "1.0.60"
+anyhow = "1.0.65"
 base64 = "0.13.0"
-bech32 = "0.9.0"
+bech32 = "0.9.1"
 bip32 = { version = "0.4.0", features = ["secp256k1", "bip39"] }
-chrono = "0.4.21"
-clap = { version = "3.2.16", features = ["derive"] }
+chrono = "0.4.22"
+clap = { version = "3.2.22", features = ["derive"] }
 cosmos-sdk-proto = { git = "https://github.com/rnbguy/cosmos-rust", branch = "rano/json" }
 der-parser = "8.1.0"
 directories = "4.0.1"
-futures = "0.3.21"
+futures = "0.3.24"
 gql_client = "1.0.6"
 keyring = "1.2.0"
 lazy_static = "1.4.0"
@@ -28,17 +28,17 @@ levenshtein = "1.0.5"
 prost = "0.11.0"
 regex = "1.6.0"
 requestty = "0.4.1"
-ripemd = "0.1.1"
+ripemd = "0.1.3"
 rpassword = "7.0.0"
 secp256k1 = "0.24.0"
-serde = { version = "1.0.143", features = ["derive"] }
-serde_json = "1.0.83"
-serde_yaml = "0.9.4"
-sha2 = "0.10.2"
-sha3 = "0.10.2"
+serde = { version = "1.0.145", features = ["derive"] }
+serde_json = "1.0.85"
+serde_yaml = "0.9.13"
+sha2 = "0.10.6"
+sha3 = "0.10.5"
 tendermint = "0.23.9"
 tendermint-rpc = { version = "0.23.9", features = ["http-client"] }
-tokio = { version = "1.20.1", features = ["rt-multi-thread"] }
-tracing = "0.1.36"
+tokio = { version = "1.21.2", features = ["rt-multi-thread"] }
+tracing = "0.1.37"
 ureq = { version = "2.5.0", features = ["json"] }
-url = "2.2.2"
+url = "2.3.1"
