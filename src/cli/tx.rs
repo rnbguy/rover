@@ -64,7 +64,7 @@ pub enum Transaction {
     },
     IBCTransfer {
         source_channel: String,
-        #[clap(parse(try_from_str = custom_coin))]
+        #[clap(value_parser(custom_coin))]
         token: Coin,
         sender: String,
         receiver_address: String,

@@ -22,7 +22,7 @@ pub fn custom_keystorebackend(backend_str: &str) -> Result<KeyStoreBackend> {
     })
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct VotePair {
     pub proposal_id: u64,
     pub option: VoteOption,

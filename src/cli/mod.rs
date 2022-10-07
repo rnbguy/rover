@@ -35,13 +35,13 @@ pub enum Args {
         executor: Option<String>,
         #[clap(long, short)]
         rpc: Option<String>,
-        #[clap(long, short, parse(try_from_str = custom_coin))]
+        #[clap(long, short, value_parser(custom_coin))]
         fee: Option<Coin>,
         #[clap(subcommand)]
         transaction: tx::Transaction,
     },
     AddAccount {
-        #[clap(parse(try_from_str = custom_keystorebackend))]
+        #[clap(value_parser(custom_keystorebackend))]
         keystore: KeyStoreBackend,
         key: String,
         #[clap(value_enum)]

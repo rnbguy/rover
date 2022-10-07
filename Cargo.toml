@@ -14,7 +14,7 @@ base64 = "0.13.0"
 bech32 = "0.9.1"
 bip32 = { version = "0.4.0", features = ["secp256k1", "bip39"] }
 chrono = "0.4.22"
-clap = { version = "3.2.22", features = ["derive"] }
+clap = { version = "4.0.10", features = ["derive"] }
 cosmos-sdk-proto = { git = "https://github.com/rnbguy/cosmos-rust", branch = "rano/json" }
 der-parser = "8.1.0"
 directories = "4.0.1"
