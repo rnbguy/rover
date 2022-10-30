@@ -6,6 +6,7 @@ use cosmos_sdk_proto::cosmos::gov::v1beta1::VoteOption;
 
 use crate::account::KeyStoreBackend;
 use crate::Result;
+use std::io::BufRead;
 
 pub fn custom_keystorebackend(backend_str: &str) -> Result<KeyStoreBackend> {
     Ok(if backend_str == "Ledger" {
@@ -50,4 +51,14 @@ pub fn custom_coin(coin_str: &str) -> Result<Coin> {
         .skip_while(|x| x.is_numeric())
         .collect::<String>();
     Ok(Coin { denom, amount })
+}
+
+pub fn custom_io_string(json_str: &str) -> Result<String> {
+    Ok(match json_str {
+        "-" => std::io::stdin().lock().lines().flatten().collect(),
+        _ if json_str.starts_with('@') => {
+            std::fs::read_to_string(json_str.strip_prefix('@').context("should never arise")?)?
+        }
+        _ => json_str.into(),
+    })
 }

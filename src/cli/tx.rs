@@ -18,7 +18,7 @@ use cosmos_sdk_proto::{
 };
 use futures::StreamExt;
 
-use super::utils::{custom_coin, VotePair};
+use super::utils::{custom_coin, custom_io_string, VotePair};
 
 #[derive(Subcommand, Debug)]
 pub enum Transaction {
@@ -71,11 +71,12 @@ pub enum Transaction {
         receiver_address: String,
     },
     Cosmwasm {
-        json: String,
         #[clap(value_parser(custom_coin))]
         funds: Coin,
         sender: String,
         contract_address: String,
+        #[clap(value_parser(custom_io_string))]
+        json: String,
     },
 }
 
