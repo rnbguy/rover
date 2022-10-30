@@ -61,6 +61,7 @@ rover tx cosmoshub-4 [grantee_address] vote my_account 1:Yes 2:Abstain 3:No
   - [x] PingPub
   - [x] Cosmos directory (`cosmos/chain-registry` clone)
   - [x] Emeris (closed)
+- [x] restake.app (semi)
 - [x] CLI
   - [ ] Transaction
     - [x] Send
@@ -70,7 +71,8 @@ rover tx cosmoshub-4 [grantee_address] vote my_account 1:Yes 2:Abstain 3:No
     - [x] Auto-restake
     - [x] Grant
     - [x] IBC transfer
-    - [x] Support Authz exec
+    - [x] Authz exec
+    - [x] Cosmwasm exec
     - [ ] ??
   - [ ] Query
     - [ ] ??
