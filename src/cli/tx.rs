@@ -13,6 +13,7 @@ use cosmos_sdk_proto::{
         gov::v1beta1::MsgVote,
         staking::v1beta1::{MsgBeginRedelegate, MsgDelegate},
     },
+    cosmwasm::wasm::v1::MsgExecuteContract,
     ibc::applications::transfer::v1::MsgTransfer,
 };
 use futures::StreamExt;
@@ -68,6 +69,13 @@ pub enum Transaction {
         token: Coin,
         sender: String,
         receiver_address: String,
+    },
+    Cosmwasm {
+        json: String,
+        #[clap(value_parser(custom_coin))]
+        funds: Coin,
+        sender: String,
+        contract_address: String,
     },
 }
 
@@ -396,6 +404,24 @@ impl Transaction {
                                     as u64,
                             };
                             (account_acc, vec![Any::try_pack(ibc_transfer)?])
+                        }
+                        Self::Cosmwasm {
+                            json,
+                            funds,
+                            sender,
+                            contract_address,
+                        } => {
+                            let account_acc = accounts.get(sender).expect("not exists");
+                            let account = account_acc.address(hrp)?;
+
+                            let cw_execute = MsgExecuteContract {
+                                sender: account,
+                                contract: contract_address.into(),
+                                msg: json.as_bytes().to_vec(),
+                                funds: vec![funds.clone()],
+                            };
+
+                            (account_acc, vec![Any::try_pack(cw_execute)?])
                         }
                     };
 
