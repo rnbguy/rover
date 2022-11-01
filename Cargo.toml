@@ -37,7 +37,7 @@ serde_yaml = "0.9.14"
 sha2 = "0.10.6"
 sha3 = "0.10.6"
 tendermint = "0.25.0"
-tendermint-rpc = { version = "0.25.0", features = ["http-client"] }
+tendermint-rpc = { version = "0.26.0", features = ["http-client"] }
 tokio = { version = "1.21.2", features = ["rt-multi-thread"] }
 tracing = "0.1.37"
 ureq = { version = "2.5.0", features = ["json"] }
