@@ -15,7 +15,7 @@ use cosmos_sdk_proto::cosmos::auth::v1beta1::{
 };
 
 use serde_json::Value;
-use tendermint::abci::Path;
+use tendermint_rpc::abci::Path;
 use tracing::info;
 
 use crate::endpoint::get_rpc_endpoints;

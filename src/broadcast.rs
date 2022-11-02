@@ -10,7 +10,7 @@ use cosmos_sdk_proto::prost_wkt_types::MessageSerde;
 use crate::Result;
 
 use serde::Serialize;
-use tendermint::abci::Path;
+use tendermint_rpc::abci::Path;
 use tendermint_rpc::endpoint::broadcast::tx_sync::Response as TendermintResponse;
 use tendermint_rpc::{Client, HttpClient};
 
