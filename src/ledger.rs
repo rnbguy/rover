@@ -52,7 +52,7 @@ pub fn apdu_ins_get_addr_secp256k1(
     APDUCommand {
         cla: 0x55,
         ins: 0x04,
-        p1: if show_address { 0x01 } else { 0x00 },
+        p1: u8::from(show_address),
         p2: 0x00,
         data: bytes,
     }

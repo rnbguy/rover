@@ -37,7 +37,7 @@ fn key_from_mnemonic(mmseed: &str, coin: u64) -> Result<XPrv> {
 }
 
 pub fn cosmos_key_derive(bytes: &[u8]) -> Vec<u8> {
-    Ripemd160::digest(&Sha256::digest(bytes))[..20].to_vec()
+    Ripemd160::digest(Sha256::digest(bytes))[..20].to_vec()
 }
 
 pub fn ethereum_key_derive(bytes: &[u8]) -> Vec<u8> {
