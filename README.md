@@ -57,6 +57,9 @@ rover tx cosmoshub-4 [grantee_address] vote my_account 1:Yes 2:Abstain 3:No
   - [x] REST
 - [x] Gas simulation
 - [x] List public endpoints
+- [x] Obfuscated in-memory key store.
+  - Don't use it for primary keys. Anyone with memory access can steal your key.
+  - Use only for test keys.
 - [x] Pull chain info from online resources
   - [x] PingPub
   - [x] Cosmos directory (`cosmos/chain-registry` clone)
