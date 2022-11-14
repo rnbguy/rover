@@ -80,9 +80,10 @@ impl Args {
     pub async fn run(&self) -> crate::Result<()> {
         #[cfg(feature = "obfstr")]
         {
-            let memory_key_name = obfstr::obfstr!("mem_key").to_string();
+            // KEY_ID="test_key" PRIV_KEY=$(secret-tool lookup application rust-keyring service rover username <OS_KEY_ID>) cargo build --features obfstr --release
+            // rover add-account Memory:test_key <ACCOUNT_ID> cosmos
             {
-                // PRIV_KEY=$(secret-tool lookup service rover username laptop-key application rust-keyring) cargo run -- ...
+                let memory_key_name = obfstr::obfstr!(env!("KEY_ID")).to_string();
                 let memory_base64 = obfstr::obfstr!(env!("PRIV_KEY")).to_string();
                 // let memory_base64 = obfstr::obfstr!("PRIVKEY").to_string();
                 let secret_bytes =
