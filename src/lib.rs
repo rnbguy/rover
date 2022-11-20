@@ -12,6 +12,7 @@ pub mod msg;
 pub mod query;
 pub mod txs;
 pub mod utils;
+pub mod vanity;
 
 pub type Result<O> = anyhow::Result<O>;
 

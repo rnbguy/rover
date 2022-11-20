@@ -123,3 +123,16 @@ pub fn get_uncompressed_pub_key_from_memory(key_name: &str) -> Result<Vec<u8>> {
     let public_key = PublicKey::from_secret_key(&secp, &secret_key);
     Ok(public_key.serialize_uncompressed()[1..].to_vec())
 }
+
+pub fn mnemonic_to_cosmos_addr(mnemonic: &Mnemonic, hrp: &str, coin_type: &u64) -> Result<String> {
+    let drv_path = format!("m/44'/{coin_type}'/0'/0/0");
+    let derivation_path = DerivationPath::from_str(&drv_path)?;
+    let seed = mnemonic.to_seed("");
+    let priv_key = XPrv::derive_from_path(seed, &derivation_path)?;
+    let pub_key = priv_key.public_key();
+    Ok(bech32::encode(
+        hrp,
+        cosmos_key_derive(pub_key.to_bytes().as_ref()).to_base32(),
+        Variant::Bech32,
+    )?)
+}

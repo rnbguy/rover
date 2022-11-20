@@ -70,6 +70,10 @@ pub enum Args {
         #[clap(default_value_t = 118)]
         coin_type: u64,
     },
+    Vanity {
+        prefix: String,
+        coin_type: u64,
+    },
     Config {
         key: String,
         value: Option<String>,
@@ -93,6 +97,11 @@ impl Args {
             }
         }
         match &self {
+            Self::Vanity { prefix, coin_type } => {
+                let (addr, mm) = crate::vanity::find_parallel(prefix, coin_type)?;
+                println!("found: {} : {}", mm.phrase(), addr);
+                Ok(())
+            }
             Self::Endpoint { chain_id, grpc } => {
                 let project_dir = directories::ProjectDirs::from("systems", "rnbguy", "rover")
                     .context("project dir")?;

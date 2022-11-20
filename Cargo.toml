@@ -27,6 +27,7 @@ ledger-transport-hid = "0.10.0"
 levenshtein = "1.0.5"
 obfstr = { version = "0.4.1", optional = true }
 prost = "0.11.0"
+rayon = "1.6.0"
 regex = "1.6.0"
 requestty = "0.5.0"
 ripemd = "0.1.3"
