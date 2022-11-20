@@ -65,6 +65,7 @@ rover tx cosmoshub-4 [grantee_address] vote my_account 1:Yes 2:Abstain 3:No
   - [x] Cosmos directory (`cosmos/chain-registry` clone)
   - [x] Emeris (closed)
 - [x] restake.app (semi)
+- [x] cosmos vanity wallets
 - [x] CLI
   - [ ] Transaction
     - [x] Send
