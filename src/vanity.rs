@@ -5,6 +5,11 @@ use bip32::{secp256k1::elliptic_curve::rand_core::OsRng, Language, Mnemonic};
 use rayon::prelude::*;
 
 pub fn find_parallel(vanity_prefix: &str, coin_type: &u64) -> Result<(String, Mnemonic)> {
+    // https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki#bech32
+    (!vanity_prefix.contains("1bio"))
+        .then_some(())
+        .context("contains invalid char")?;
+
     let hrp = "1".to_owned();
 
     let mm = rayon::iter::repeat(())
