@@ -107,8 +107,8 @@ impl Transaction {
         let config_path = config_dir.join("config.yaml");
         let config_path_str = config_path.to_str().context("project path")?;
 
-        println!("{:?}", accounts_path_str);
-        println!("{:?}", accounts);
+        println!("{accounts_path_str:?}");
+        println!("{accounts:?}");
 
         let config: HashMap<String, String> = read_data_from_yaml(config_path_str)?;
         let graphql_endpoint = config.get("graphql").expect("not exists");
@@ -510,7 +510,7 @@ impl Transaction {
                         )
                         .await??;
 
-                        println!("{:?}", resp);
+                        println!("{resp:?}");
 
                         (resp.code.is_ok())
                             .then_some(rpc_endpoint)

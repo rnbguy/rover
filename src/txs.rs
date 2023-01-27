@@ -160,7 +160,7 @@ fn amino_json(mut msg: Value) -> Result<Value> {
             "MsgWithdrawDelegatorReward" => "MsgWithdrawDelegationReward",
             _ => split_msg_type,
         };
-        let msg_type = format!("cosmos-sdk/{}", split_msg_type);
+        let msg_type = format!("cosmos-sdk/{split_msg_type}");
         Ok(serde_json::json!({
             "type": msg_type,
             "value": msg,

@@ -36,7 +36,7 @@ impl FromStr for VotePair {
         let (left, right) = s.split_once(':').context("error spliting into a pair")?;
         Ok(VotePair {
             proposal_id: left.parse()?,
-            option: serde_json::from_str(&format!("\"{}\"", right))?,
+            option: serde_json::from_str(&format!("\"{right}\""))?,
         })
     }
 }

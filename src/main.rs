@@ -5,7 +5,7 @@ use rover::cli::Args;
 async fn main() -> rover::Result<()> {
     let args = Args::parse();
 
-    println!("{:#?}", args);
+    println!("{args:#?}");
 
     args.run().await?;
 

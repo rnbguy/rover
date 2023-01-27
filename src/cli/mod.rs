@@ -134,7 +134,7 @@ impl Args {
                 };
 
                 for (height, endpoint) in endpoints {
-                    println!("{} : {}", height, endpoint);
+                    println!("{height} : {endpoint}");
                 }
                 Ok(())
             }
@@ -173,7 +173,7 @@ impl Args {
                 let new_account = Account::new(keystore.clone(), addr_type).await?;
                 accounts.insert(key.into(), new_account);
                 write_data_as_yaml(accounts_path_str, accounts)?;
-                println!("Added to {}", accounts_path_str);
+                println!("Added to {accounts_path_str}");
                 Ok(())
             }
             Self::AddKeyToOs { key, coin_type } => {
@@ -431,7 +431,7 @@ impl Args {
                                 },
                             );
                         }
-                        _ => println!("{}", chain_name),
+                        _ => println!("{chain_name}"),
                     }
                 }
                 write_data_as_yaml(chains_path_str, &chains)?;
