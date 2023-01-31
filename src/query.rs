@@ -1,5 +1,3 @@
-use std::str::FromStr;
-
 use anyhow::Context;
 use cosmos_sdk_proto::cosmos::bank::v1beta1::{
     query_client::QueryClient as QueryTotalSupplyClient, QueryTotalSupplyRequest,
@@ -15,13 +13,12 @@ use cosmos_sdk_proto::cosmos::auth::v1beta1::{
 };
 
 use serde_json::Value;
-use tendermint_rpc::abci::Path;
 use tracing::info;
 
 use crate::endpoint::get_rpc_endpoints;
 use crate::Result;
 
-use tendermint_rpc::endpoint::abci_info::AbciInfo;
+use tendermint::abci::response::Info;
 use tendermint_rpc::endpoint::status::Response as NodeStatus;
 use tendermint_rpc::Client;
 
@@ -43,7 +40,7 @@ where
     let rpc_client = tendermint_rpc::HttpClient::new(endpoint)?;
 
     let resp = rpc_client
-        .abci_query(Some(Path::from_str(&type_url)?), pb_data, None, false)
+        .abci_query(Some(type_url), pb_data, None, false)
         .await?;
 
     crate::utils::read_from_bytes(&resp.value)
@@ -95,7 +92,7 @@ pub async fn validate_rest(endpoint: String) -> Result<()> {
     Ok(())
 }
 
-pub async fn get_node_info_rpc(endpoint: &str) -> Result<(NodeStatus, AbciInfo)> {
+pub async fn get_node_info_rpc(endpoint: &str) -> Result<(NodeStatus, Info)> {
     let rpc_client = tendermint_rpc::HttpClient::new(endpoint)?;
 
     Ok((rpc_client.status().await?, rpc_client.abci_info().await?))

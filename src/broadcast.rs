@@ -10,11 +10,8 @@ use cosmos_sdk_proto::prost_wkt_types::MessageSerde;
 use crate::Result;
 
 use serde::Serialize;
-use tendermint_rpc::abci::Path;
 use tendermint_rpc::endpoint::broadcast::tx_sync::Response as TendermintResponse;
 use tendermint_rpc::{Client, HttpClient};
-
-use std::str::FromStr;
 
 pub fn create_broadcast_sync_payload(tx: &Tx) -> Result<BroadcastTxRequest> {
     Ok(BroadcastTxRequest {
@@ -38,7 +35,7 @@ pub async fn broadcast_via_tendermint_rpc(
     let rpc_client = HttpClient::new(endpoint).context("invalid endpoint")?;
 
     Ok(rpc_client
-        .broadcast_tx_sync(signed_tx.try_encoded()?.into())
+        .broadcast_tx_sync(signed_tx.try_encoded()?)
         .await?)
 }
 
@@ -68,7 +65,7 @@ where
 
     let resp = rpc_client
         .abci_query(
-            Some(Path::from_str("/app/simulate")?),
+            Some("/app/simulate".into()),
             query.try_encoded()?,
             None,
             false,
