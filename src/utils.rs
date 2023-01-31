@@ -1,4 +1,5 @@
 use crate::Result;
+use base64::prelude::{Engine as _, BASE64_STANDARD};
 use bech32::Variant;
 use cosmos_sdk_proto::prost_wkt_types::MessageSerde;
 use serde::{de::DeserializeOwned, Serialize};
@@ -8,7 +9,7 @@ pub fn write_base64_to_file<T>(t: &T, file_name: &str) -> Result<()>
 where
     T: MessageSerde,
 {
-    let base64_str = base64::encode(t.try_encoded()?);
+    let base64_str = BASE64_STANDARD.encode(t.try_encoded()?);
     std::fs::write(file_name, base64_str)?;
     Ok(())
 }
@@ -27,14 +28,14 @@ pub fn read_bytes_from_file(file_name: &str) -> Result<Vec<u8>> {
 
 pub fn read_base64_from_file(file_name: &str) -> Result<Vec<u8>> {
     let s = std::fs::read_to_string(file_name)?;
-    Ok(base64::decode(s.trim())?)
+    Ok(BASE64_STANDARD.decode(s.trim())?)
 }
 
 pub fn read_from_base64<T>(base64: &str) -> Result<T>
 where
     T: MessageSerde + Default + Clone,
 {
-    read_from_bytes(&base64::decode(base64.trim())?)
+    read_from_bytes(&BASE64_STANDARD.decode(base64.trim())?)
 }
 
 pub fn read_from_bytes<T>(bytes: &[u8]) -> Result<T>

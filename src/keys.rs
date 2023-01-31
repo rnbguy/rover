@@ -10,6 +10,7 @@ use std::collections::HashMap;
 
 use crate::Result;
 
+use base64::prelude::{Engine as _, BASE64_STANDARD};
 use ripemd::Ripemd160;
 use sha2::{Digest, Sha256};
 use sha3::Keccak256;
@@ -68,7 +69,7 @@ pub fn from_pk_bytes_to_address(pub_key: &[u8], addr_type: &AddressType) -> Resu
 
 fn save_key_to_os(bytes: &[u8], keyname: &str) -> Result<()> {
     let entry = keyring::Entry::new("rover", keyname);
-    let password = base64::encode(bytes);
+    let password = BASE64_STANDARD.encode(bytes);
     entry.set_password(&password)?;
     Ok(())
 }
@@ -76,19 +77,22 @@ fn save_key_to_os(bytes: &[u8], keyname: &str) -> Result<()> {
 pub fn save_key_to_os_from_mmseed(mmseed: &str, keyname: &str, coin: u64) -> Result<()> {
     let priv_key = crate::keys::key_from_mnemonic(mmseed, coin)?;
     save_key_to_os(&priv_key.to_bytes(), keyname)?;
-    println!("{}", base64::encode(priv_key.public_key().to_bytes()));
+    println!(
+        "{}",
+        BASE64_STANDARD.encode(priv_key.public_key().to_bytes())
+    );
     Ok(())
 }
 
 pub fn get_priv_key_from_os(key_name: &str) -> Result<SigningKey> {
     let entry = keyring::Entry::new("rover", key_name);
-    let priv_bytes = base64::decode(entry.get_password()?)?;
+    let priv_bytes = BASE64_STANDARD.decode(entry.get_password()?)?;
     Ok(SigningKey::from_bytes(&priv_bytes).expect("error"))
 }
 
 pub fn get_uncompressed_pub_key_from_os(key_name: &str) -> Result<Vec<u8>> {
     let entry = keyring::Entry::new("rover", key_name);
-    let priv_bytes = base64::decode(entry.get_password()?)?;
+    let priv_bytes = BASE64_STANDARD.decode(entry.get_password()?)?;
     let secp = Secp256k1::new();
     let secret_key = SecretKey::from_slice(&priv_bytes).expect("32 bytes, within curve order");
     let public_key = PublicKey::from_secret_key(&secp, &secret_key);
@@ -117,7 +121,7 @@ pub fn get_priv_key_from_memory(key_name: &str) -> Result<SigningKey> {
 
 pub fn get_uncompressed_pub_key_from_memory(key_name: &str) -> Result<Vec<u8>> {
     let entry = keyring::Entry::new("rover", key_name);
-    let priv_bytes = base64::decode(entry.get_password()?)?;
+    let priv_bytes = BASE64_STANDARD.decode(entry.get_password()?)?;
     let secp = Secp256k1::new();
     let secret_key = SecretKey::from_slice(&priv_bytes).expect("32 bytes, within curve order");
     let public_key = PublicKey::from_secret_key(&secp, &secret_key);
