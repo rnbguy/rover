@@ -1,3 +1,4 @@
+use anyhow::Context;
 use cosmos_sdk_proto::cosmos::authz::v1beta1::{
     GenericAuthorization, Grant, MsgExec, MsgGrant, MsgRevoke,
 };
@@ -22,6 +23,15 @@ use cosmos_sdk_proto::prost_wkt_types::{Any, MessageSerde};
 use crate::query::perform_rpc_query;
 use crate::Result;
 
+fn after_one_year() -> Result<chrono::NaiveDateTime> {
+    Ok(chrono::Utc::now()
+        .date_naive()
+        .succ_opt()
+        .and_then(|x| x.and_hms_opt(0, 0, 0))
+        .context("should be something")?
+        + chrono::Duration::days(365))
+}
+
 fn generate_authz_msgs(granter: &str, grantee: &str, msg_types: &[&str]) -> Result<Vec<MsgGrant>> {
     msg_types
         .iter()
@@ -33,11 +43,7 @@ fn generate_authz_msgs(granter: &str, grantee: &str, msg_types: &[&str]) -> Resu
                     authorization: Some(Any::try_pack(GenericAuthorization {
                         msg: msg_type.to_owned().into(),
                     })?),
-                    expiration: Some(
-                        (chrono::Utc::today().succ().and_hms(0, 0, 0)
-                            + chrono::Duration::days(365))
-                        .into(),
-                    ),
+                    expiration: Some(after_one_year()?.into()),
                 }),
             })
         })
@@ -87,9 +93,7 @@ pub fn generate_feeallowance(granter: &str, grantee: &str) -> Result<MsgGrantAll
         grantee: grantee.into(),
         allowance: Some(Any::try_pack(BasicAllowance {
             spend_limit: vec![],
-            expiration: Some(
-                (chrono::Utc::today().succ().and_hms(0, 0, 0) + chrono::Duration::days(365)).into(),
-            ),
+            expiration: Some(after_one_year()?.into()),
         })?),
     })
 }
@@ -143,9 +147,7 @@ pub fn restake_app_auth(granter: &str, grantee: &str, validator: &str) -> Result
                     address: vec![validator.into()],
                 })),
             })?),
-            expiration: Some(
-                (chrono::Utc::today().succ().and_hms(0, 0, 0) + chrono::Duration::days(365)).into(),
-            ),
+            expiration: Some(after_one_year()?.into()),
         }),
     })
 }
