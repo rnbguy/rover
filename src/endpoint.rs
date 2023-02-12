@@ -3,8 +3,11 @@ use crate::{
     Result,
 };
 
+use anyhow::Context;
+
 use futures::future::join_all;
 use serde::{de::Error, Deserialize, Deserializer, Serialize};
+use serde_json::Value;
 
 use url::Url;
 
@@ -71,6 +74,29 @@ pub async fn get_rpc_endpoints<'a>(
     list.sort_unstable_by(|a, b| b.cmp(a));
 
     Ok(list)
+}
+
+pub async fn get_cosmos_directory_name(chain_id: &str) -> Result<String> {
+    let resp: Value = ureq::get("https://chains.cosmos.directory")
+        .call()?
+        .into_json()?;
+    let chain_name = resp
+        .pointer("/chains")
+        .context("no chains value")?
+        .as_array()
+        .context("no vec value")?
+        .iter()
+        .filter_map(|v| {
+            (v.pointer("/chain_id")?.as_str()? == chain_id).then(|| {
+                v.pointer("/name")
+                    .and_then(|k| k.as_str())
+                    .expect("name in chains data")
+            })
+        })
+        .next()
+        .context("at least one chain")?;
+
+    Ok(format!("https://rpc.cosmos.directory/{chain_name}"))
 }
 
 pub async fn get_zone_ids<'a>(graphql_endpoint: &str) -> Result<Vec<String>> {

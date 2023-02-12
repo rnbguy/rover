@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use crate::endpoint::get_cosmos_directory_name;
 use crate::{
     account::Account, endpoint::get_rpc_endpoints, msg::generate_grant_exec,
     utils::read_data_from_yaml, Result,
@@ -124,10 +125,12 @@ impl Transaction {
         let fee_granter = String::new();
         let mut rpc_endpoints = get_rpc_endpoints(chain_id, graphql_endpoint).await?;
 
-        rpc_endpoints = rpc_endpoints.into_iter().skip(3).collect();
-
         if let Some(rpc_endpoint) = rpc {
             rpc_endpoints.push((0, rpc_endpoint.into()))
+        }
+
+        if let Ok(cosmos_directory_rpc) = get_cosmos_directory_name(chain_id).await {
+            rpc_endpoints.push((0, cosmos_directory_rpc))
         }
 
         let (owner, account_number, unsigned_tx) = futures::stream::iter(rpc_endpoints.iter())
