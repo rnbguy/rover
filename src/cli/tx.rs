@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use crate::endpoint::get_cosmos_directory_name;
+use crate::txs::get_account_number_and_sequence;
 use crate::{
     account::Account, endpoint::get_rpc_endpoints, msg::generate_grant_exec,
     utils::read_data_from_yaml, Result,
@@ -335,9 +336,10 @@ impl Transaction {
 
                             any_msgs.push(Any::try_pack(fee_allowance)?);
 
-                            let unit = crate::msg::unit_transfer(&granter, &grantee, denom)?;
-
-                            any_msgs.push(Any::try_pack(unit)?);
+                            if get_account_number_and_sequence(rpc_endpoint, &grantee).await.is_err() {
+                                let unit = crate::msg::unit_transfer(&granter, &grantee, denom)?;
+                                any_msgs.push(Any::try_pack(unit)?);
+                            }
 
                             (granter_acc, any_msgs)
                         }
