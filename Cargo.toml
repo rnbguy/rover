@@ -17,7 +17,7 @@ chrono = "0.4.24"
 clap = { version = "4.2.2", features = ["derive"] }
 cosmos-sdk-proto = { git = "https://github.com/rnbguy/cosmos-rust", branch = "rano/json", features = ["cosmwasm"] }
 der-parser = "8.2.0"
-directories = "4.0.1"
+directories = "5.0.0"
 futures = "0.3.28"
 gql_client = "1.0.7"
 keyring = "2.0.2"
