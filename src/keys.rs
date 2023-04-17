@@ -87,7 +87,7 @@ pub fn save_key_to_os_from_mmseed(mmseed: &str, keyname: &str, coin: u64) -> Res
 pub fn get_priv_key_from_os(key_name: &str) -> Result<SigningKey> {
     let entry = keyring::Entry::new("rover", key_name)?;
     let priv_bytes = BASE64_STANDARD.decode(entry.get_password()?)?;
-    Ok(SigningKey::from_bytes(&priv_bytes).expect("error"))
+    Ok(SigningKey::from_slice(&priv_bytes).expect("error"))
 }
 
 pub fn get_uncompressed_pub_key_from_os(key_name: &str) -> Result<Vec<u8>> {
@@ -116,7 +116,7 @@ pub fn get_priv_key_from_memory(key_name: &str) -> Result<SigningKey> {
     let priv_bytes = keyring
         .get(key_name)
         .context("key is not present in memory")?;
-    Ok(SigningKey::from_bytes(priv_bytes).expect("error"))
+    Ok(SigningKey::from_slice(priv_bytes).expect("error"))
 }
 
 pub fn get_uncompressed_pub_key_from_memory(key_name: &str) -> Result<Vec<u8>> {

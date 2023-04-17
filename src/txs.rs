@@ -1,4 +1,5 @@
 use anyhow::Context;
+use bip32::secp256k1::ecdsa::signature::SignatureEncoding;
 use bip32::secp256k1::ecdsa::{signature::Signer, signature::Verifier, Signature};
 
 use cosmos_sdk_proto::cosmos::tx::v1beta1::{AuthInfo, TxBody};
@@ -88,7 +89,7 @@ where
     K: Signer<Signature>,
 {
     let signature: Signature = priv_key.try_sign(&sign_doc.try_encoded()?).expect("error");
-    Ok(signature.as_ref().try_into()?)
+    Ok(signature.to_vec().try_into().expect("64 sized vector"))
 }
 
 pub fn update_signature(mut tx: Tx, signature: &[u8; 64]) -> Tx {
@@ -118,13 +119,12 @@ pub fn verify_transaction<K>(
 where
     K: Verifier<Signature>,
 {
-    use bip32::secp256k1::ecdsa::signature::Signature;
     let sign_doc = crate::txs::generate_sign_doc(signed_tx, chain_id, account_number)?;
     let signature = signed_tx.signatures[0].clone();
     pub_key
         .verify(
             &sign_doc.try_encoded()?,
-            &Signature::from_bytes(&signature).expect("error"),
+            &Signature::from_slice(&signature).expect("error"),
         )
         .expect("error");
     Ok(())

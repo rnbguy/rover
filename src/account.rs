@@ -20,7 +20,7 @@ use crate::{
     },
     Result,
 };
-use bip32::{secp256k1::ecdsa::VerifyingKey, DerivationPath};
+use bip32::{secp256k1::ecdsa::VerifyingKey, DerivationPath, PublicKey};
 use bip32::{
     secp256k1::ecdsa::{signature::Signer, Signature},
     PrivateKey,
@@ -44,12 +44,12 @@ impl KeyStoreBackend {
             Self::Os(key) => {
                 let priv_key = get_priv_key_from_os(key)?;
                 let signature: Signature = priv_key.try_sign(data).unwrap();
-                Ok(signature.as_ref().try_into()?)
+                Ok(signature.to_bytes().try_into()?)
             }
             Self::Memory(key) => {
                 let priv_key = get_priv_key_from_memory(key)?;
                 let signature: Signature = priv_key.try_sign(data).unwrap();
-                Ok(signature.as_ref().try_into()?)
+                Ok(signature.to_bytes().try_into()?)
             }
         }
     }
