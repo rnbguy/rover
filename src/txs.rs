@@ -65,6 +65,7 @@ pub fn generate_auth_info(
     Ok(AuthInfo {
         signer_infos: vec![signer_info],
         fee: Some(fee),
+        tip: None,
     })
 }
 
