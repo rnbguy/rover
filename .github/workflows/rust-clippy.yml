@@ -41,18 +41,7 @@ jobs:
           sudo apt-get install -y libudev-dev protobuf-compiler
 
       - name: Cache cargo
-        id: cache-cargo
-        uses: actions/cache@v3
-        with:
-          path: ~/.cargo/bin
-          key: ${{ runner.os }}-cargo-bin
-
-      - name: Cache cargo project build
-        id: cache-cargo-project
-        uses: actions/cache@v3
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-project
+        uses: Swatinem/rust-cache@v2
 
       - name: Install required cargo
         run: cargo install --force clippy-sarif sarif-fmt
