@@ -55,7 +55,11 @@ pub fn custom_coin(coin_str: &str) -> Result<Coin> {
 
 pub fn custom_io_string(json_str: &str) -> Result<String> {
     Ok(match json_str {
-        "-" => std::io::stdin().lock().lines().flatten().collect(),
+        "-" => std::io::stdin()
+            .lock()
+            .lines()
+            .map_while(std::io::Result::ok)
+            .collect(),
         _ if json_str.starts_with('@') => {
             std::fs::read_to_string(json_str.strip_prefix('@').context("should never arise")?)?
         }

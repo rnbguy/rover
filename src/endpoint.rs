@@ -86,15 +86,14 @@ pub async fn get_cosmos_directory_name(chain_id: &str) -> Result<String> {
         .as_array()
         .context("no vec value")?
         .iter()
-        .filter_map(|v| {
-            (v.pointer("/chain_id")?.as_str()? == chain_id).then(|| {
-                v.pointer("/name")
-                    .and_then(|k| k.as_str())
-                    .expect("name in chains data")
-            })
+        .filter_map(|v| (v.pointer("/chain_id")?.as_str()? == chain_id).then_some(v))
+        .map(|v| {
+            v.pointer("/name")
+                .and_then(|k| k.as_str())
+                .context("name in chains data")
         })
         .next()
-        .context("at least one chain")?;
+        .context("at least one chain")??;
 
     Ok(format!("https://rpc.cosmos.directory/{chain_name}"))
 }

@@ -44,12 +44,12 @@ impl KeyStoreBackend {
             Self::Os(key) => {
                 let priv_key = get_priv_key_from_os(key)?;
                 let signature: Signature = priv_key.try_sign(data).unwrap();
-                Ok(signature.to_bytes().try_into()?)
+                Ok(signature.to_bytes().into())
             }
             Self::Memory(key) => {
                 let priv_key = get_priv_key_from_memory(key)?;
                 let signature: Signature = priv_key.try_sign(data).unwrap();
-                Ok(signature.to_bytes().try_into()?)
+                Ok(signature.to_bytes().into())
             }
         }
     }

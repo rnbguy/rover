@@ -172,7 +172,7 @@ impl Transaction {
                             let rewards = crate::query::get_rewards(&account, rpc_endpoint).await?;
 
                             let validator = delegations
-                                .get(0)
+                                .first()
                                 .context("delegator should have atleast one validator")?
                                 .0
                                 .clone();
@@ -229,7 +229,7 @@ impl Transaction {
                                         crate::query::get_delegated(&account, rpc_endpoint).await?;
 
                                     delegations
-                                        .get(0)
+                                        .first()
                                         .context("delegator should have atleast one validator")?
                                         .0
                                         .clone()
@@ -409,7 +409,8 @@ impl Transaction {
                                 timeout_height: None,
                                 timeout_timestamp: (chrono::Utc::now()
                                     + chrono::Duration::minutes(10))
-                                .timestamp_nanos()
+                                .timestamp_nanos_opt()
+                                .context("error while converting time")?
                                     as u64,
                             };
                             (account_acc, vec![Any::try_pack(ibc_transfer)?])
