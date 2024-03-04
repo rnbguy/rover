@@ -1,6 +1,6 @@
 use crate::Result;
 use base64::prelude::{Engine as _, BASE64_STANDARD};
-use bech32::Variant;
+use bech32::{Bech32, Hrp};
 use cosmos_sdk_proto::prost_wkt_types::MessageSerde;
 use serde::{de::DeserializeOwned, Serialize};
 use serde_json::Value;
@@ -48,8 +48,8 @@ where
 }
 
 pub fn bech32(address: &str, prefix: &str) -> Result<String> {
-    let (_, bytes, _) = bech32::decode(address)?;
-    Ok(bech32::encode(prefix, bytes, Variant::Bech32)?)
+    let (_, bytes) = bech32::decode(address)?;
+    Ok(bech32::encode::<Bech32>(Hrp::parse(prefix)?, &bytes)?)
 }
 
 pub fn parse_dec_amount(st: &str, precision: usize) -> Result<u128> {

@@ -15,7 +15,7 @@ use ripemd::Ripemd160;
 use sha2::{Digest, Sha256};
 use sha3::Keccak256;
 
-use bech32::{ToBase32, Variant};
+use bech32::{Bech32, Hrp};
 
 // https://iancoleman.io/bip39
 
@@ -62,7 +62,7 @@ pub fn from_pk_bytes_to_address(pub_key: &[u8], addr_type: &AddressType) -> Resu
         AddressType::Cosmos => cosmos_key_derive(pub_key),
         AddressType::Ethereum => ethereum_key_derive(pub_key),
     };
-    let address = bech32::encode("cosmos", data.to_base32(), Variant::Bech32)?;
+    let address = bech32::encode::<Bech32>(Hrp::parse("cosmos")?, &data)?;
     println!("Cosmos address: {}", &address);
     Ok(address)
 }
@@ -134,9 +134,8 @@ pub fn mnemonic_to_cosmos_addr(mnemonic: &Mnemonic, hrp: &str, coin_type: &u64) 
     let seed = mnemonic.to_seed("");
     let priv_key = XPrv::derive_from_path(seed, &derivation_path)?;
     let pub_key = priv_key.public_key();
-    Ok(bech32::encode(
-        hrp,
-        cosmos_key_derive(pub_key.to_bytes().as_ref()).to_base32(),
-        Variant::Bech32,
+    Ok(bech32::encode::<Bech32>(
+        Hrp::parse(hrp)?,
+        &cosmos_key_derive(pub_key.to_bytes().as_ref()),
     )?)
 }

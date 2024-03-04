@@ -191,7 +191,7 @@ pub async fn get_rpc_endpoint_chain_info(rpc_endpoint: &str) -> Result<crate::ch
                 .map(|x| x.base_vesting_account.unwrap().base_account.unwrap())
         })?
         .address;
-    let (prefix, _, _) = bech32::decode(&address)?;
+    let (prefix, _) = bech32::decode(&address)?;
 
     let page_request = PageRequest {
         limit: u64::MAX,
@@ -214,7 +214,7 @@ pub async fn get_rpc_endpoint_chain_info(rpc_endpoint: &str) -> Result<crate::ch
     Result::Ok(if denoms.len() == 1 {
         crate::chain::Chain {
             chain_id,
-            prefix,
+            prefix: prefix.to_string(),
             fee: 0,
             denom: denoms[0].into(),
         }
@@ -232,7 +232,7 @@ pub async fn get_rpc_endpoint_chain_info(rpc_endpoint: &str) -> Result<crate::ch
 
         crate::chain::Chain {
             chain_id,
-            prefix,
+            prefix: prefix.to_string(),
             fee: 0,
             denom,
         }
