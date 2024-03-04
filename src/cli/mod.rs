@@ -4,14 +4,12 @@ use anyhow::Context;
 use clap::Parser;
 use cosmos_sdk_proto::cosmos::base::v1beta1::Coin;
 
-use crate::{
-    account::{Account, KeyStoreBackend},
-    endpoint::{get_rpc_endpoints, transform_to_grpc_endpoint},
-    keys::{save_key_to_os_from_mmseed, AddressType},
-    query::{get_chain_id_info, get_chain_id_rpc, get_rpc_endpoint_chain_info},
-    utils::{read_data_from_yaml, write_data_as_yaml},
-    Result,
-};
+use crate::account::{Account, KeyStoreBackend};
+use crate::endpoint::{get_rpc_endpoints, transform_to_grpc_endpoint};
+use crate::keys::{save_key_to_os_from_mmseed, AddressType};
+use crate::query::{get_chain_id_info, get_chain_id_rpc, get_rpc_endpoint_chain_info};
+use crate::utils::{read_data_from_yaml, write_data_as_yaml};
+use crate::Result;
 
 pub mod tx;
 pub mod utils;

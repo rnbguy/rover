@@ -1,15 +1,12 @@
-use crate::{
-    query::{validate_grpc, validate_rpc},
-    Result,
-};
-
 use anyhow::Context;
-
 use futures::future::join_all;
-use serde::{de::Error, Deserialize, Deserializer, Serialize};
+use serde::de::Error;
+use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::Value;
-
 use url::Url;
+
+use crate::query::{validate_grpc, validate_rpc};
+use crate::Result;
 
 #[derive(Debug, Deserialize)]
 pub struct ZoneNodes {

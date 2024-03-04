@@ -1,3 +1,4 @@
+use std::io::BufRead;
 use std::str::FromStr;
 
 use anyhow::Context;
@@ -6,7 +7,6 @@ use cosmos_sdk_proto::cosmos::gov::v1beta1::VoteOption;
 
 use crate::account::KeyStoreBackend;
 use crate::Result;
-use std::io::BufRead;
 
 pub fn custom_keystorebackend(backend_str: &str) -> Result<KeyStoreBackend> {
     Ok(if backend_str == "Ledger" {

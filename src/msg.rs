@@ -4,9 +4,6 @@ use cosmos_sdk_proto::cosmos::authz::v1beta1::{
 };
 use cosmos_sdk_proto::cosmos::bank::v1beta1::MsgSend;
 use cosmos_sdk_proto::cosmos::base::v1beta1::Coin;
-use cosmos_sdk_proto::cosmos::staking::v1beta1::stake_authorization::{Policy, Validators};
-use cosmos_sdk_proto::cosmos::staking::v1beta1::{AuthorizationType, StakeAuthorization};
-
 use cosmos_sdk_proto::cosmos::distribution::v1beta1::{
     MsgWithdrawDelegatorReward, QueryDelegationTotalRewardsRequest,
     QueryDelegationTotalRewardsResponse,
@@ -14,10 +11,11 @@ use cosmos_sdk_proto::cosmos::distribution::v1beta1::{
 use cosmos_sdk_proto::cosmos::feegrant::v1beta1::{
     BasicAllowance, MsgGrantAllowance, MsgRevokeAllowance,
 };
-
 use cosmos_sdk_proto::cosmos::gov::v1beta1::MsgVote;
-use cosmos_sdk_proto::cosmos::staking::v1beta1::MsgDelegate;
-
+use cosmos_sdk_proto::cosmos::staking::v1beta1::stake_authorization::{Policy, Validators};
+use cosmos_sdk_proto::cosmos::staking::v1beta1::{
+    AuthorizationType, MsgDelegate, StakeAuthorization,
+};
 use cosmos_sdk_proto::prost_wkt_types::{Any, MessageSerde};
 
 use crate::query::perform_rpc_query;

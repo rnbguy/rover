@@ -1,14 +1,14 @@
-use std::{
-    sync::{atomic::Ordering, Arc, RwLock},
-    time::SystemTime,
-};
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::{Arc, RwLock};
+use std::time::SystemTime;
+
+use anyhow::Context;
+use bip32::secp256k1::elliptic_curve::rand_core::OsRng;
+use bip32::{Language, Mnemonic};
+use rayon::prelude::*;
 
 use crate::keys::mnemonic_to_cosmos_addr;
 use crate::Result;
-use anyhow::Context;
-use bip32::{secp256k1::elliptic_curve::rand_core::OsRng, Language, Mnemonic};
-use rayon::prelude::*;
-use std::sync::atomic::AtomicU64;
 
 pub fn find_parallel(vanity_prefix: &str, coin_type: &u64) -> Result<(String, Mnemonic)> {
     // https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki#bech32

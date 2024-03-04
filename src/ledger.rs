@@ -1,10 +1,7 @@
 use anyhow::Context;
 use bip32::DerivationPath;
-
-use ledger_transport_hid::{hidapi, TransportNativeHID};
-
 use ledger_transport::{APDUCommand, APDUErrorCode};
-
+use ledger_transport_hid::{hidapi, TransportNativeHID};
 use serde_json::Value;
 
 use crate::Result;

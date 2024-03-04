@@ -1,9 +1,11 @@
-use crate::Result;
 use base64::prelude::{Engine as _, BASE64_STANDARD};
 use bech32::{Bech32, Hrp};
 use cosmos_sdk_proto::prost_wkt_types::MessageSerde;
-use serde::{de::DeserializeOwned, Serialize};
+use serde::de::DeserializeOwned;
+use serde::Serialize;
 use serde_json::Value;
+
+use crate::Result;
 
 pub fn write_base64_to_file<T>(t: &T, file_name: &str) -> Result<()>
 where

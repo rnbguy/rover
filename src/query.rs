@@ -1,28 +1,22 @@
 use anyhow::Context;
-use cosmos_sdk_proto::cosmos::bank::v1beta1::{
-    query_client::QueryClient as QueryTotalSupplyClient, QueryTotalSupplyRequest,
-    QueryTotalSupplyResponse,
-};
-use cosmos_sdk_proto::cosmos::base::query::v1beta1::PageRequest;
-use cosmos_sdk_proto::cosmos::vesting::v1beta1::ContinuousVestingAccount;
-use cosmos_sdk_proto::prost_wkt_types::{Any, MessageSerde};
-
 use cosmos_sdk_proto::cosmos::auth::v1beta1::{
     BaseAccount, QueryAccountRequest, QueryAccountResponse, QueryAccountsRequest,
     QueryAccountsResponse,
 };
-
+use cosmos_sdk_proto::cosmos::bank::v1beta1::query_client::QueryClient as QueryTotalSupplyClient;
+use cosmos_sdk_proto::cosmos::bank::v1beta1::{QueryTotalSupplyRequest, QueryTotalSupplyResponse};
+use cosmos_sdk_proto::cosmos::base::query::v1beta1::PageRequest;
+use cosmos_sdk_proto::cosmos::vesting::v1beta1::ContinuousVestingAccount;
+use cosmos_sdk_proto::prost_wkt_types::{Any, MessageSerde};
+use futures::stream::StreamExt;
 use serde_json::Value;
+use tendermint::abci::response::Info;
+use tendermint_rpc::endpoint::status::Response as NodeStatus;
+use tendermint_rpc::Client;
 use tracing::info;
 
 use crate::endpoint::get_rpc_endpoints;
 use crate::Result;
-
-use tendermint::abci::response::Info;
-use tendermint_rpc::endpoint::status::Response as NodeStatus;
-use tendermint_rpc::Client;
-
-use futures::stream::StreamExt;
 
 pub async fn perform_rpc_query<S, R>(endpoint: &str, query: S) -> Result<R>
 where

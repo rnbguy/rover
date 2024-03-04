@@ -1,21 +1,19 @@
+use std::collections::HashMap;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 
 use anyhow::Context;
-use bip32::{secp256k1::ecdsa::SigningKey, DerivationPath, Language, Mnemonic, XPrv};
-use clap::ValueEnum;
-use secp256k1::{PublicKey, Secp256k1, SecretKey};
-
-use std::collections::HashMap;
-
-use crate::Result;
-
 use base64::prelude::{Engine as _, BASE64_STANDARD};
+use bech32::{Bech32, Hrp};
+use bip32::secp256k1::ecdsa::SigningKey;
+use bip32::{DerivationPath, Language, Mnemonic, XPrv};
+use clap::ValueEnum;
 use ripemd::Ripemd160;
+use secp256k1::{PublicKey, Secp256k1, SecretKey};
 use sha2::{Digest, Sha256};
 use sha3::Keccak256;
 
-use bech32::{Bech32, Hrp};
+use crate::Result;
 
 // https://iancoleman.io/bip39
 
