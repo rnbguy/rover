@@ -27,20 +27,20 @@ ledger-transport-hid = "0.10"
 levenshtein = "1.0"
 obfstr = { version = "0.4", optional = true }
 prost = "0.12"
-rayon = "1.9"
+rayon = "1.10"
 regex = "1.10"
 requestty = "0.5"
 ripemd = "0.1"
 rpassword = "7.3"
-secp256k1 = "0.28"
+secp256k1 = "0.29"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 serde_yaml = "0.9"
 sha2 = "0.10"
 sha3 = "0.10"
-tendermint = "0.34"
-tendermint-rpc = { version = "0.34", features = ["http-client"] }
-tokio = { version = "1.36", features = ["rt-multi-thread"] }
+tendermint = "0.35"
+tendermint-rpc = { version = "0.35", features = ["http-client"] }
+tokio = { version = "1.37", features = ["rt-multi-thread"] }
 tracing = "0.1"
 ureq = { version = "2.9", features = ["json"] }
 url = "2.5"
